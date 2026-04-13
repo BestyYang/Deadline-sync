@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeadlineSync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f6f6f9; color: #111; min-height: 100vh; }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: #fff; border-bottom: 1px solid #e8e8e8;
+      padding: 0 28px; height: 54px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .logo { font-weight: 800; font-size: 16px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .user-email { font-size: 13px; color: #999; }
+    .logout { font-size: 13px; color: #999; text-decoration: none; padding: 5px 11px; border: 1px solid #e5e5e5; border-radius: 7px; }
+    .logout:hover { background: #f5f5f5; color: #333; }
+
+    /* ── Layout ── */
+    .layout { display: flex; gap: 24px; max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; align-items: flex-start; }
+
+    /* ── Left column ── */
+    .main-col { flex: 1; min-width: 0; }
+
+    /* ── Right sidebar ── */
+    .events-col { width: 300px; flex-shrink: 0; }
+
+    /* ── Section headers ── */
+    .col-title { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 4px; }
+    .col-hint  { font-size: 13px; color: #999; margin-bottom: 16px; }
+
+    /* ── Paste area ── */
+    .paste-area {
+      background: #fff; border: 2px dashed #ddd; border-radius: 13px;
+      padding: 20px; min-height: 110px; font-size: 14px; color: #111;
+      outline: none; cursor: text; transition: border-color .15s; line-height: 1.6;
+    }
+    .paste-area:focus { border-color: #4f46e5; border-style: solid; }
+    .paste-area:empty::before { content: 'Paste text or screenshot here (⌘V)…'; color: #ccc; }
+    .paste-area img { max-width: 100%; border-radius: 8px; }
+
+    .row { display: flex; gap: 8px; margin-top: 10px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 9px 16px; border-radius: 9px; font-size: 13px;
+      font-weight: 600; font-family: inherit; cursor: pointer; border: none;
+      transition: background .15s;
+    }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-purple { background: #4f46e5; color: #fff; }
+    .btn-purple:hover:not(:disabled) { background: #4338ca; }
+    .btn-gray   { background: #ebebeb; color: #444; }
+    .btn-gray:hover:not(:disabled) { background: #ddd; }
+    .btn-sm     { padding: 5px 11px; font-size: 12px; border-radius: 7px; }
+    .btn-green  { background: #dcfce7; color: #16a34a; }
+    .btn-green:hover { background: #bbf7d0; }
+    .btn-red    { background: #fee2e2; color: #dc2626; }
+    .btn-red:hover   { background: #fecaca; }
+
+    /* ── Loading / messages ── */
+    .loading { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #aaa; margin-top: 10px; }
+    .spin { width: 15px; height: 15px; border: 2px solid #ddd; border-top-color: #4f46e5; border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .msg { padding: 10px 14px; border-radius: 9px; font-size: 13px; margin-top: 10px; }
+    .msg-error   { background: #fef2f2; color: #dc2626; }
+    .msg-success { background: #f0fdf4; color: #16a34a; }
+
+    /* ── Preview ── */
+    .preview-wrap { margin-top: 20px; }
+    .preview-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 11px; padding: 16px; margin-bottom: 10px; }
+    .preview-label { font-size: 11px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; margin-top: 10px; display: block; }
+    .preview-label:first-child { margin-top: 0; }
+    .pinput {
+      width: 100%; padding: 7px 10px; font-size: 13px; font-family: inherit;
+      border: 1.5px solid #e8e8e8; border-radius: 7px; background: #fafafa; outline: none;
+    }
+    .pinput:focus { border-color: #4f46e5; background: #fff; }
+    .ptextarea { min-height: 56px; resize: vertical; line-height: 1.5; }
+    .input-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .itab { padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: #ebebeb; color: #666; font-family: inherit; transition: background .15s; }
+    .itab.active { background: #4f46e5; color: #fff; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: #ebebeb; margin: 24px 0; }
+
+    /* ── Assignment cards ── */
+    .acard {
+      background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 10px; transition: opacity .2s;
+    }
+    .acard.done { opacity: .45; }
+    .acard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .course-tag { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #4f46e5; margin-bottom: 2px; }
+    .acard-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .acard-meta { text-align: right; flex-shrink: 0; }
+    .due { font-size: 12px; color: #888; white-space: nowrap; }
+    .due.overdue { color: #dc2626; font-weight: 600; }
+    .pts { font-size: 11px; font-weight: 700; background: #f0efff; color: #4f46e5; padding: 1px 7px; border-radius: 99px; margin-top: 3px; display: inline-block; }
+    details.reqs { margin-top: 8px; }
+    details.reqs summary { font-size: 12px; color: #bbb; cursor: pointer; }
+    details.reqs summary:hover { color: #888; }
+    details.reqs p { font-size: 12px; color: #555; margin-top: 5px; white-space: pre-wrap; line-height: 1.5; }
+    .acard-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .sub-type { font-size: 11px; color: #ccc; }
+    .card-actions { display: flex; gap: 6px; }
+
+    /* ── Event cards (sidebar) ── */
+    .ecard {
+      background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+      padding: 13px 14px; margin-bottom: 9px;
+    }
+    .ecard-title { font-size: 14px; font-weight: 600; margin-bottom: 7px; line-height: 1.3; }
+    .emeta { display: flex; flex-direction: column; gap: 4px; }
+    .emeta-row { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: #666; }
+    .emeta-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .ecard-detail { font-size: 12px; color: #aaa; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 7px; line-height: 1.5; }
+    .ecard-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+    /* ── Sidebar sticky ── */
+    .events-sticky { position: sticky; top: 70px; }
+
+    /* ── Empty states ── */
+    .empty { text-align: center; padding: 32px 0; color: #ccc; font-size: 14px; }
+    .empty-icon { font-size: 28px; margin-bottom: 6px; }
+
+    .mtype { padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1.5px solid #e5e5e5; cursor: pointer; background: #fff; color: #666; font-family: inherit; }
+    .mtype.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+    .manual-type-row { display: flex; gap: 8px; margin-bottom: 14px; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .modal { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+
+    .needs-date { border-color: #fbbf24 !important; }
+    .no-date-banner { background: #fefce8; color: #92400e; border: 1px solid #fde68a; border-radius: 7px; padding: 8px 12px; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+    .pinput-required { border-color: #fbbf24 !important; background: #fefce8; }
+    .btn-remove { margin-top: 10px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: inherit; background: #fee2e2; color: #dc2626; border: none; border-radius: 7px; cursor: pointer; }
+    .btn-remove:hover { background: #fecaca; }
+
+    .hidden { display: none !important; }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 700px) {
+      .topbar { padding: 0 16px; }
+      .user-email { display: none; }
+
+      .layout { flex-direction: column; padding: 20px 16px 60px; gap: 0; }
+
+      .events-col { width: 100%; }
+      .events-sticky { position: static; margin-top: 0; }
+
+      .input-tabs { flex-wrap: wrap; }
+      .itab { flex: 1; text-align: center; padding: 8px 10px; }
+
+      .acard-top { flex-direction: column; gap: 4px; }
+      .acard-meta { text-align: left; flex-direction: row; gap: 8px; align-items: center; }
+
+      .card-actions { flex-wrap: wrap; gap: 6px; }
+      .btn-sm { padding: 7px 13px; font-size: 13px; }
+
+      .ecard-foot { gap: 8px; }
+
+      .modal { padding: 20px 16px; border-radius: 12px; }
+
+      .row { flex-wrap: wrap; }
+      .btn { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">📅 DeadlineSync</div>
+  <div class="topbar-right">
+    <span class="user-email">{{ user.email }}</span>
+    <a href="/logout" class="logout">Log out</a>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── Left: Assignments ── -->
+  <div class="main-col">
+
+    <div class="col-title">Add new</div>
+
+    <!-- Input mode tabs -->
+    <div class="input-tabs">
+      <button class="itab active" id="itab-assignments" onclick="setMode('assignments')">📋 Assignment</button>
+      <button class="itab" id="itab-events" onclick="setMode('events')">📅 Event</button>
+      <button class="itab" id="itab-manual" onclick="setMode('manual')">✏️ Manual</button>
+    </div>
+    <div id="paste-hint" class="col-hint">Paste Canvas content — AI extracts deadlines.</div>
+
+    <!-- Paste UI -->
+    <div id="paste-ui">
+      <div id="paste" class="paste-area" contenteditable="true"></div>
+      <div class="row">
+        <button class="btn btn-purple" id="btn-extract">Extract</button>
+        <button class="btn btn-gray"   id="btn-clear">Clear</button>
+      </div>
+    </div>
+
+    <!-- Manual add form -->
+    <div id="manual-ui" class="hidden">
+      <div class="manual-type-row">
+        <button class="mtype active" id="mtype-assignment" onclick="setManualType('assignment')">Assignment</button>
+        <button class="mtype" id="mtype-event" onclick="setManualType('event')">Event</button>
+      </div>
+
+      <!-- Manual assignment fields -->
+      <div id="manual-assignment-fields">
+        <span class="preview-label">Title *</span>
+        <input class="pinput" id="ma-title" placeholder="e.g. Problem Set 4">
+        <span class="preview-label">Due date</span>
+        <input class="pinput" id="ma-due" type="datetime-local">
+        <span class="preview-label">Course</span>
+        <input class="pinput" id="ma-course" placeholder="e.g. Capital Markets">
+        <span class="preview-label">Details</span>
+        <textarea class="pinput ptextarea" id="ma-desc" placeholder="Optional notes"></textarea>
+        <span class="preview-label">Points</span>
+        <input class="pinput" id="ma-points" placeholder="e.g. 100">
+      </div>
+
+      <!-- Manual event fields -->
+      <div id="manual-event-fields" class="hidden">
+        <span class="preview-label">Title *</span>
+        <input class="pinput" id="me-title" placeholder="e.g. LPE Society Talk">
+        <span class="preview-label">Date</span>
+        <input class="pinput" id="me-date" placeholder="e.g. Monday, Apr 21">
+        <span class="preview-label">Time</span>
+        <input class="pinput" id="me-time" placeholder="e.g. 12:00 PM">
+        <span class="preview-label">Location</span>
+        <input class="pinput" id="me-location" placeholder="e.g. BW 208">
+        <span class="preview-label">Details</span>
+        <textarea class="pinput ptextarea" id="me-details" placeholder="Optional notes"></textarea>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="btn btn-purple" id="btn-manual-save">Add to my list</button>
+      </div>
+      <div id="manual-msg" class="msg hidden"></div>
+    </div>
+    <div id="loading" class="loading hidden"><div class="spin"></div> Reading…</div>
+    <div id="msg" class="msg hidden"></div>
+
+    <!-- Preview section -->
+    <div id="preview-wrap" class="preview-wrap hidden">
+      <div class="divider"></div>
+
+      <div id="preview-assignments"></div>
+      <div id="preview-events" class="hidden"></div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="btn btn-purple" id="btn-confirm">Save all to my list</button>
+        <button class="btn btn-gray"   id="btn-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Assignment list -->
+    <div class="col-title" style="font-size:16px;">Assignments</div>
+    <div class="col-hint">Email reminders sent 2 days and 5 hours before each deadline.</div>
+
+    <div id="asgn-list">
+      {% if not assignments %}
+      <div class="empty"><div class="empty-icon">🎉</div>Nothing yet!</div>
+      {% else %}
+      {% for a in assignments %}
+      <div class="acard {% if a.is_done %}done{% endif %}" id="a{{ a.id }}">
+        <div class="acard-top">
+          <div>
+            <div class="course-tag">{{ a.course or 'Assignment' }}</div>
+            <div class="acard-title">{{ a.title }}</div>
+          </div>
+          <div class="acard-meta">
+            {% if a.due_date %}
+            <div class="due {% if not a.is_done and a.due_date < now %}overdue{% endif %}">
+              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %} &nbsp;<span style="color:#e85d04;font-weight:700;font-size:12px;">{% if diff == 0 %}· today{% elif diff == 1 %}· tomorrow{% else %}· {{ diff }} days away{% endif %}</span>{% endif %}
+            </div>
+            {% endif %}
+            {% if a.points %}<div class="pts">{{ a.points }} pts</div>{% endif %}
+          </div>
+        </div>
+        {% if a.description %}
+        <details class="reqs"><summary>View requirements</summary><p>{{ a.description }}</p></details>
+        {% endif %}
+        <div class="acard-bottom">
+          <span class="sub-type">{{ a.submission_type }}</span>
+          <div class="card-actions">
+            <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})">
+              {% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}
+            </button>
+            <button class="btn btn-sm btn-gray edit-asgn-btn"
+              data-id="{{ a.id }}"
+              data-title="{{ a.title|e }}"
+              data-course="{{ a.course|e }}"
+              data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}"
+              data-desc="{{ a.description|e }}"
+              data-points="{{ a.points|e }}"
+              data-sub="{{ a.submission_type|e }}">Edit</button>
+            <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})">Delete</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── Right: Events sidebar ── -->
+  <div class="events-col">
+    <div class="events-sticky">
+      <div class="col-title" style="font-size:16px;">Events</div>
+      <div class="col-hint">No reminders — just your schedule.</div>
+
+      <div id="event-list">
+        {% if not events %}
+        <div class="empty"><div class="empty-icon">📭</div>No events yet.</div>
+        {% else %}
+        {% for e in events %}
+        <div class="ecard" id="e{{ e.id }}">
+          <div class="ecard-title">{{ e.title }}</div>
+          <div class="emeta">
+            {% if e.event_date or e.event_time %}
+            <div class="emeta-row"><span class="emeta-icon">🗓</span><span>{{ e.event_date }}{% if e.event_time %} · {{ e.event_time }}{% endif %}</span></div>
+            {% endif %}
+            {% if e.location %}
+            <div class="emeta-row"><span class="emeta-icon">📍</span><span>{{ e.location }}</span></div>
+            {% endif %}
+          </div>
+          {% if e.details %}
+          <div class="ecard-detail">{{ e.details }}</div>
+          {% endif %}
+          <div class="ecard-foot">
+            <button class="btn btn-sm btn-gray edit-event-btn"
+              data-id="{{ e.id }}"
+              data-title="{{ e.title|e }}"
+              data-date="{{ e.event_date|e }}"
+              data-time="{{ e.event_time|e }}"
+              data-location="{{ e.location|e }}"
+              data-details="{{ e.details|e }}">Edit</button>
+            <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Edit Modal ── -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">Edit</div>
+
+    <div id="modal-assignment-fields">
+      <span class="preview-label">Title</span>
+      <input class="pinput" id="edit-title" placeholder="Title">
+      <span class="preview-label">Due date</span>
+      <input class="pinput" id="edit-due" type="datetime-local">
+      <span class="preview-label">Course</span>
+      <input class="pinput" id="edit-course" placeholder="Course">
+      <span class="preview-label">Details</span>
+      <textarea class="pinput ptextarea" id="edit-desc"></textarea>
+      <span class="preview-label">Points</span>
+      <input class="pinput" id="edit-points" placeholder="e.g. 100">
+      <span class="preview-label">Submission</span>
+      <input class="pinput" id="edit-submission" placeholder="e.g. Online">
+    </div>
+
+    <div id="modal-event-fields" class="hidden">
+      <span class="preview-label">Title</span>
+      <input class="pinput" id="eedit-title" placeholder="Title">
+      <span class="preview-label">Date</span>
+      <input class="pinput" id="eedit-date" placeholder="e.g. Monday, Apr 21">
+      <span class="preview-label">Time</span>
+      <input class="pinput" id="eedit-time" placeholder="e.g. 12:00 PM">
+      <span class="preview-label">Location</span>
+      <input class="pinput" id="eedit-location" placeholder="e.g. BW 208">
+      <span class="preview-label">Details</span>
+      <textarea class="pinput ptextarea" id="eedit-details"></textarea>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <button class="btn btn-purple" id="btn-modal-save">Save</button>
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="modal-msg" class="msg hidden"></div>
+  </div>
+</div>
+
+<script>
+  const pasteEl  = document.getElementById('paste');
+  const loading  = document.getElementById('loading');
+  const msgBox   = document.getElementById('msg');
+  const previewWrap = document.getElementById('preview-wrap');
+  let parsed = { assignments: [], events: [] };
+  let currentMode = 'assignments';
+
+
+  // ── Paste image → convert to PNG ─────────────────────────────────────────
+  pasteEl.addEventListener('paste', e => {
+    for (const item of e.clipboardData.items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const orig = new Image();
+          orig.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = orig.width; canvas.height = orig.height;
+            canvas.getContext('2d').drawImage(orig, 0, 0);
+            const png = canvas.toDataURL('image/png');
+            pasteEl.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = png;
+            img.dataset.b64  = png.split(',')[1];
+            img.dataset.mime = 'image/png';
+            pasteEl.appendChild(img);
+          };
+          orig.src = ev.target.result;
+        };
+        reader.readAsDataURL(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  document.getElementById('btn-clear').onclick  = () => pasteEl.innerHTML = '';
+  document.getElementById('btn-cancel').onclick = () => previewWrap.classList.add('hidden');
+
+  // ── Extract ───────────────────────────────────────────────────────────────
+  document.getElementById('btn-extract').onclick = async () => {
+    hideMsg();
+    const img = pasteEl.querySelector('img');
+    let payload;
+    if (img?.dataset.b64) {
+      payload = { type: 'image', data: img.dataset.b64, mediaType: img.dataset.mime, mode: currentMode };
+    } else {
+      const text = pasteEl.innerText.trim();
+      if (!text) { showMsg('Paste something first.', 'error'); return; }
+      payload = { type: 'text', content: text, mode: currentMode };
+    }
+    setLoading(true);
+    try {
+      const res  = await post('/api/parse', payload);
+      const data = await res.json();
+      if (!res.ok) { showMsg(data.error || 'Something went wrong.', 'error'); return; }
+      parsed = data;
+      const items = currentMode === 'events' ? parsed.events : parsed.assignments;
+      if (!items?.length) { showMsg('Nothing found. Try pasting more content.', 'error'); return; }
+      if (currentMode === 'events') {
+        renderEventPreviews(parsed.events || []);
+        document.getElementById('preview-assignments').classList.add('hidden');
+        document.getElementById('preview-events').classList.remove('hidden');
+      } else {
+        renderAssignmentPreviews(parsed.assignments || []);
+        document.getElementById('preview-assignments').classList.remove('hidden');
+        document.getElementById('preview-events').classList.add('hidden');
+      }
+      previewWrap.classList.remove('hidden');
+      previewWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) { showMsg('Something went wrong. Try again.', 'error'); }
+    finally { setLoading(false); }
+  };
+
+  // ── Confirm ───────────────────────────────────────────────────────────────
+  document.getElementById('btn-confirm').onclick = async () => {
+    document.getElementById('btn-confirm').disabled = true;
+    try {
+      let res, d;
+      if (currentMode === 'events') {
+        res = await post('/api/save-events', { events: collectEventEdits() });
+      } else {
+        res = await post('/api/save', { assignments: collectAssignmentEdits() });
+      }
+      d = await res.json();
+      showMsg(`Saved ${d.saved?.length || 0} item(s)! Refreshing…`, 'success');
+      setTimeout(() => location.reload(), 1400);
+    } catch {
+      showMsg('Could not save. Try again.', 'error');
+      document.getElementById('btn-confirm').disabled = false;
+    }
+  };
+
+  // ── Render previews ───────────────────────────────────────────────────────
+  // Clear yellow warning once a date is entered
+  document.addEventListener('change', e => {
+    if (e.target.matches('.pinput-required')) {
+      if (e.target.value) {
+        e.target.classList.remove('pinput-required');
+        const card = e.target.closest('.needs-date');
+        if (card) {
+          card.classList.remove('needs-date');
+          const banner = card.querySelector('.no-date-banner');
+          if (banner) banner.remove();
+        }
+      }
+    }
+  });
+
+  function renderAssignmentPreviews(list) {
+    document.getElementById('preview-assignments').innerHTML = list.map((a, i) => {
+      const noDate = !a.due_date;
+      return `
+        <div class="preview-card ${noDate ? 'needs-date' : ''}" id="pa-${i}">
+          ${noDate ? '<div class="no-date-banner">📅 No deadline found — please set one below</div>' : ''}
+          <span class="preview-label">Title</span>
+          <input class="pinput" data-i="${i}" data-f="title" value="${x(a.title||'')}">
+          <span class="preview-label">Due date</span>
+          <input class="pinput ${noDate ? 'pinput-required' : ''}" type="datetime-local" data-i="${i}" data-f="due_date" value="${dtl(a.due_date)}">
+          <span class="preview-label">Course</span>
+          <input class="pinput" data-i="${i}" data-f="course" value="${x(a.course||'')}">
+          <span class="preview-label">Details</span>
+          <textarea class="pinput ptextarea" data-i="${i}" data-f="description">${x(a.description||'')}</textarea>
+          <button class="btn-remove" onclick="removePreview('pa-${i}', ${i}, 'assignments')">✕ Remove</button>
+        </div>`;
+    }).join('') || '<p style="color:#bbb;font-size:13px;padding:8px 0;">Nothing found.</p>';
+  }
+
+  function renderEventPreviews(list) {
+    document.getElementById('preview-events').innerHTML = list.length
+      ? list.map((e, i) => `
+        <div class="preview-card" id="pe-${i}">
+          <span class="preview-label">Title</span>
+          <input class="pinput ev" data-i="${i}" data-f="title" value="${x(e.title||'')}">
+          <span class="preview-label">Date</span>
+          <input class="pinput ev" data-i="${i}" data-f="event_date" value="${x(e.event_date||'')}">
+          <span class="preview-label">Time</span>
+          <input class="pinput ev" data-i="${i}" data-f="event_time" value="${x(e.event_time||'')}">
+          <span class="preview-label">Location</span>
+          <input class="pinput ev" data-i="${i}" data-f="location" value="${x(e.location||'')}">
+          <span class="preview-label">Details</span>
+          <textarea class="pinput ptextarea ev" data-i="${i}" data-f="details">${x(e.details||'')}</textarea>
+          <button class="btn-remove" onclick="removePreview('pe-${i}', ${i}, 'events')">✕ Remove</button>
+        </div>`).join('')
+      : '<p style="color:#bbb;font-size:13px;padding:8px 0;">No events found.</p>';
+  }
+
+  function collectAssignmentEdits() {
+    const out = JSON.parse(JSON.stringify(parsed.assignments || []));
+    document.querySelectorAll('#preview-assignments .pinput').forEach(el => {
+      if (!el.dataset.i || !el.dataset.f) return;
+      let v = el.value;
+      if (el.dataset.f === 'due_date' && v) v = v.length === 16 ? v + ':00' : v.slice(0,19);
+      out[+el.dataset.i][el.dataset.f] = v;
+    });
+    return out;
+  }
+
+  function collectEventEdits() {
+    const out = JSON.parse(JSON.stringify(parsed.events || []));
+    document.querySelectorAll('#preview-events .pinput').forEach(el => {
+      if (!el.dataset.i || !el.dataset.f) return;
+      let val = el.value;
+      if (el.dataset.f === 'event_date') val = correctWeekday(val);
+      out[+el.dataset.i][el.dataset.f] = val;
+    });
+    return out;
+  }
+
+  // ── Mode switching ────────────────────────────────────────────────────────
+  function setMode(mode) {
+    currentMode = mode;
+    ['assignments','events','manual'].forEach(m => {
+      document.getElementById(`itab-${m}`)?.classList.toggle('active', m === mode);
+    });
+    document.getElementById('paste-ui').classList.toggle('hidden', mode === 'manual');
+    document.getElementById('manual-ui').classList.toggle('hidden', mode !== 'manual');
+    document.getElementById('paste-hint').textContent = mode === 'events'
+      ? 'Paste a flyer, email, or announcement — AI grabs any event it finds.'
+      : mode === 'manual' ? 'Fill in the details below.'
+      : 'Paste Canvas content — AI extracts deadlines.';
+    if (mode !== 'manual') { pasteEl.innerHTML = ''; previewWrap.classList.add('hidden'); hideMsg(); }
+  }
+
+  // ── Manual type toggle ────────────────────────────────────────────────────
+  let manualType = 'assignment';
+  function setManualType(t) {
+    manualType = t;
+    document.getElementById('mtype-assignment').classList.toggle('active', t === 'assignment');
+    document.getElementById('mtype-event').classList.toggle('active', t === 'event');
+    document.getElementById('manual-assignment-fields').classList.toggle('hidden', t !== 'assignment');
+    document.getElementById('manual-event-fields').classList.toggle('hidden', t !== 'event');
+  }
+
+  // ── Manual save ───────────────────────────────────────────────────────────
+  document.getElementById('btn-manual-save').onclick = async () => {
+    const mmsg = document.getElementById('manual-msg');
+    mmsg.className = 'msg hidden';
+    let body;
+    if (manualType === 'assignment') {
+      const title = document.getElementById('ma-title').value.trim();
+      if (!title) { mmsg.textContent = 'Title is required.'; mmsg.className = 'msg msg-error'; return; }
+      body = { kind: 'assignment', title, due_date: document.getElementById('ma-due').value, course: document.getElementById('ma-course').value, description: document.getElementById('ma-desc').value, points: document.getElementById('ma-points').value };
+    } else {
+      const title = document.getElementById('me-title').value.trim();
+      if (!title) { mmsg.textContent = 'Title is required.'; mmsg.className = 'msg msg-error'; return; }
+      const d = document.getElementById('me-date').value;
+      const t = document.getElementById('me-time').value;
+      body = { kind: 'event', title, event_date: d, event_time: t, location: document.getElementById('me-location').value, details: document.getElementById('me-details').value, sort_date: d && t ? `${d} ${t}` : '' };
+    }
+    const res = await post('/api/add-one', body);
+    if (res.ok) { mmsg.textContent = 'Saved! Refreshing…'; mmsg.className = 'msg msg-success'; setTimeout(() => location.reload(), 1200); }
+    else { mmsg.textContent = 'Could not save.'; mmsg.className = 'msg msg-error'; }
+  };
+
+  // ── Edit modal ────────────────────────────────────────────────────────────
+  let editId = null, editKind = null;
+
+  // Use event delegation so buttons work regardless of special chars in data
+  document.addEventListener('click', e => {
+    const ab = e.target.closest('.edit-asgn-btn');
+    if (ab) {
+      const d = ab.dataset;
+      editId = d.id; editKind = 'assignment';
+      document.getElementById('modal-title').textContent = 'Edit Assignment';
+      document.getElementById('modal-assignment-fields').classList.remove('hidden');
+      document.getElementById('modal-event-fields').classList.add('hidden');
+      document.getElementById('edit-title').value = d.title || '';
+      document.getElementById('edit-course').value = d.course || '';
+      document.getElementById('edit-due').value = d.due || '';
+      document.getElementById('edit-desc').value = d.desc || '';
+      document.getElementById('edit-points').value = d.points || '';
+      document.getElementById('edit-submission').value = d.sub || '';
+      document.getElementById('modal-msg').className = 'msg hidden';
+      document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+    const eb = e.target.closest('.edit-event-btn');
+    if (eb) {
+      const d = eb.dataset;
+      editId = d.id; editKind = 'event';
+      document.getElementById('modal-title').textContent = 'Edit Event';
+      document.getElementById('modal-assignment-fields').classList.add('hidden');
+      document.getElementById('modal-event-fields').classList.remove('hidden');
+      document.getElementById('eedit-title').value = d.title || '';
+      document.getElementById('eedit-date').value = d.date || '';
+      document.getElementById('eedit-time').value = d.time || '';
+      document.getElementById('eedit-location').value = d.location || '';
+      document.getElementById('eedit-details').value = d.details || '';
+      document.getElementById('modal-msg').className = 'msg hidden';
+      document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+  });
+
+  // ── Weekday auto-correction ───────────────────────────────────────────────
+  // e.g. "Sunday, Apr 13" → "Monday, Apr 13" if 2026-04-13 is actually a Monday
+  function correctWeekday(dateStr) {
+    if (!dateStr) return dateStr;
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const m = dateStr.match(/(\w+),?\s+(\w+)\s+(\d+)/);
+    if (!m) return dateStr;
+    const mon = months[m[2]];
+    if (mon === undefined) return dateStr;
+    const year = new Date().getFullYear();
+    const actual = new Date(year, mon, parseInt(m[3]));
+    const correctDay = days[actual.getDay()];
+    return dateStr.replace(m[1], correctDay);
+  }
+
+  function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+
+  document.getElementById('btn-modal-save').onclick = async () => {
+    const mmsg = document.getElementById('modal-msg');
+    let body, url;
+    if (editKind === 'assignment') {
+      url = `/api/edit-assignment/${editId}`;
+      const dueRaw = document.getElementById('edit-due').value;
+      body = { title: document.getElementById('edit-title').value, course: document.getElementById('edit-course').value, due_date: dueRaw ? (dueRaw.length === 16 ? dueRaw + ':00' : dueRaw.slice(0,19)) : '', description: document.getElementById('edit-desc').value, points: document.getElementById('edit-points').value, submission_type: document.getElementById('edit-submission').value };
+    } else {
+      url = `/api/edit-event/${editId}`;
+      const rawDate = document.getElementById('eedit-date').value;
+      body = { title: document.getElementById('eedit-title').value, event_date: correctWeekday(rawDate), event_time: document.getElementById('eedit-time').value, location: document.getElementById('eedit-location').value, details: document.getElementById('eedit-details').value };
+    }
+    const res = await post(url, body);
+    if (res.ok) { mmsg.textContent = 'Saved! Refreshing…'; mmsg.className = 'msg msg-success'; setTimeout(() => location.reload(), 1000); }
+    else { mmsg.textContent = 'Could not save.'; mmsg.className = 'msg msg-error'; }
+  };
+
+  // ── Remove preview card ───────────────────────────────────────────────────
+  function removePreview(cardId, index, mode) {
+    if (mode === 'events') {
+      parsed.events.splice(index, 1);
+      renderEventPreviews(parsed.events);
+    } else {
+      parsed.assignments.splice(index, 1);
+      renderAssignmentPreviews(parsed.assignments);
+    }
+  }
+
+  // ── Mark done / delete ────────────────────────────────────────────────────
+  async function toggleDone(id) {
+    const res  = await post(`/api/done/${id}`, {});
+    const data = await res.json();
+    const card = document.getElementById(`a${id}`);
+    const btn  = card.querySelector('.btn-green');
+    if (data.is_done) { card.classList.add('done'); btn.textContent = '↩ Undo'; }
+    else              { card.classList.remove('done'); btn.textContent = 'Mark done'; }
+  }
+
+  async function delAssignment(id) {
+    if (!confirm('Delete this assignment?')) return;
+    await fetch(`/api/delete/${id}`, { method: 'DELETE' });
+    document.getElementById(`a${id}`).remove();
+  }
+
+  async function delEvent(id) {
+    if (!confirm('Delete this event?')) return;
+    await fetch(`/api/delete-event/${id}`, { method: 'DELETE' });
+    document.getElementById(`e${id}`).remove();
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function post(url, body) {
+    return fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  }
+  function setLoading(on) {
+    loading.classList.toggle('hidden', !on);
+    document.getElementById('btn-extract').disabled = on;
+  }
+  function showMsg(t, type) { msgBox.textContent = t; msgBox.className = `msg msg-${type}`; }
+  function hideMsg() { msgBox.className = 'msg hidden'; }
+  function x(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function dtl(iso) { return iso ? iso.slice(0,16) : ''; }
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeadlineSync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon { font-size: 52px; margin-bottom: 18px; }
+    h1 { font-size: 36px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 12px; }
+    .sub { font-size: 16px; color: #777; line-height: 1.6; margin-bottom: 32px; }
+    form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+    input[type=email] {
+      padding: 14px 18px; font-size: 16px; font-family: inherit;
+      border: 1.5px solid #e0e0e0; border-radius: 12px; outline: none;
+      transition: border-color .15s;
+    }
+    input[type=email]:focus { border-color: #4f46e5; }
+    button[type=submit] {
+      padding: 14px; font-size: 16px; font-weight: 700; font-family: inherit;
+      background: #4f46e5; color: #fff; border: none; border-radius: 12px;
+      cursor: pointer; transition: background .15s;
+    }
+    button[type=submit]:hover { background: #4338ca; }
+    .error { color: #dc2626; font-size: 14px; }
+    .steps { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+    .step { display: flex; gap: 14px; align-items: flex-start; }
+    .num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #f0efff; color: #4f46e5;
+      font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step strong { display: block; font-size: 15px; font-weight: 600; }
+    .step span { font-size: 13px; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📅</div>
+    <h1>Never miss a deadline.</h1>
+    <p class="sub">Paste your Canvas assignments. Get email reminders before every due date.</p>
+
+    <form action="/join" method="POST">
+      <input type="email" name="email" placeholder="your@email.com" required autofocus />
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      <button type="submit">Get started →</button>
+    </form>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div><strong>Paste text or screenshot</strong><span>Copy from Canvas and paste it in</span></div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div><strong>AI reads every deadline</strong><span>Extracts course, due date, and requirements</span></div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div><strong>Email alerts sent automatically</strong><span>2 days before and 5 hours before each deadline</span></div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div><strong>Reply "done" to stop reminders</strong><span>No app to open — just reply to the email</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
