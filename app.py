@@ -12,7 +12,13 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///deadlines.db'
+
+# Use PostgreSQL on Render (DATABASE_URL env var), fallback to local SQLite
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///deadlines.db')
+# Render gives postgres:// but SQLAlchemy needs postgresql://
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
