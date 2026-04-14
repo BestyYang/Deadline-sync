@@ -248,18 +248,24 @@ def dashboard():
                 'date':a.due_date.strftime('%Y-%m-%d'),
                 'time':a.due_date.strftime('%I:%M %p').lstrip('0'),
                 'course':a.course or ''})
+    from dateutil import parser as dp
+    cur_year = datetime.now().year
     for e in all_evt:
         if e.is_done:
             continue
         edate = None
-        if e.sort_date:
-            edate = e.sort_date.strftime('%Y-%m-%d')
-        elif e.event_date:
-            try:
-                from dateutil import parser as dp
-                edate = dp.parse(e.event_date, fuzzy=True).strftime('%Y-%m-%d')
-            except Exception:
-                pass
+        if e.event_date:
+            # Always parse from text with explicit current year to avoid AI year errors
+            for yr in [cur_year, cur_year + 1]:
+                try:
+                    edate = dp.parse(f"{e.event_date} {yr}", fuzzy=True).strftime('%Y-%m-%d')
+                    break
+                except Exception:
+                    pass
+        if not edate and e.sort_date:
+            # Fallback: use sort_date but fix wrong year
+            sd = e.sort_date.replace(year=cur_year) if e.sort_date.year < cur_year else e.sort_date
+            edate = sd.strftime('%Y-%m-%d')
         if edate:
             cal_items.append({'type':'event','title':e.title,
                 'date':edate, 'time':e.event_time or '', 'location':e.location or ''})
