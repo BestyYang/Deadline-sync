@@ -71,6 +71,10 @@ class Event(db.Model):
     created_at   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+# ── Create tables on startup (works with both gunicorn and direct run) ────────
+with app.app_context():
+    db.create_all()
+
 # ── Scheduler (placeholder — email disabled) ──────────────────────────────────
 
 def check_alerts():
