@@ -75,9 +75,22 @@ class Event(db.Model):
     created_at   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-# ── Create tables on startup (works with both gunicorn and direct run) ────────
+# ── Create tables + migrate missing columns on startup ────────────────────────
 with app.app_context():
     db.create_all()
+    # Add new columns if they don't exist yet (safe to run multiple times)
+    with db.engine.connect() as conn:
+        for table, col, coldef in [
+            ('assignment', 'pinned',     'BOOLEAN DEFAULT FALSE'),
+            ('assignment', 'sort_order', 'INTEGER'),
+            ('event',      'pinned',     'BOOLEAN DEFAULT FALSE'),
+            ('event',      'sort_order', 'INTEGER'),
+        ]:
+            try:
+                conn.execute(db.text(f'ALTER TABLE "{table}" ADD COLUMN {col} {coldef}'))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # column already exists — ignore
 
 # ── Scheduler (placeholder — email disabled) ──────────────────────────────────
 
