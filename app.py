@@ -200,6 +200,9 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('index'))
     user = User.query.get(session['user_id'])
+    if user is None:
+        session.clear()
+        return redirect(url_for('index'))
     now = datetime.now()
     assignments = (
         Assignment.query
