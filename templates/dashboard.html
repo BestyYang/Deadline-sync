@@ -1083,7 +1083,9 @@
     return [0,1,2,3,4,5,6].map(i => { const d = new Date(mon); d.setDate(mon.getDate()+i); return d; });
   }
 
-  function toDateStr(d) { return d.toISOString().slice(0,10); }
+  function toDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
 
   function renderStrip() {
     const days = getWeekDays();
