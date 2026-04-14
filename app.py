@@ -72,6 +72,7 @@ class Event(db.Model):
     details      = db.Column(db.Text, default='')
     pinned       = db.Column(db.Boolean, default=False)
     sort_order   = db.Column(db.Integer, nullable=True)
+    is_done      = db.Column(db.Boolean, default=False)
     created_at   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -85,6 +86,7 @@ with app.app_context():
             ('assignment', 'sort_order', 'INTEGER'),
             ('event',      'pinned',     'BOOLEAN DEFAULT FALSE'),
             ('event',      'sort_order', 'INTEGER'),
+            ('event',      'is_done',    'BOOLEAN DEFAULT FALSE'),
         ]:
             try:
                 conn.execute(db.text(f'ALTER TABLE "{table}" ADD COLUMN {col} {coldef}'))
@@ -227,19 +229,36 @@ def dashboard():
             d = getattr(x, date_attr)
             return (x.sort_order if x.sort_order is not None else 99999,
                     d if d else datetime.max)
-        pinned   = sorted([x for x in items if x.pinned],     key=key)
-        unpinned = sorted([x for x in items if not x.pinned], key=key)
+        pinned   = sorted([x for x in items if x.pinned and not x.is_done], key=key)
+        unpinned = sorted([x for x in items if not x.pinned and not x.is_done], key=key)
         return pinned, unpinned
 
     all_asgn = Assignment.query.filter_by(user_id=user.id).all()
     all_evt  = Event.query.filter_by(user_id=user.id).all()
     pinned_asgn, unpinned_asgn = split_sorted(all_asgn, 'due_date')
     pinned_evt,  unpinned_evt  = split_sorted(all_evt,  'sort_date')
+    past_evt = sorted([e for e in all_evt if e.is_done],
+                      key=lambda e: e.sort_date or datetime.min, reverse=True)
+
+    # Calendar data (JSON for JS)
+    cal_items = []
+    for a in all_asgn:
+        if a.due_date and not a.is_done:
+            cal_items.append({'type':'assignment','title':a.title,
+                'date':a.due_date.strftime('%Y-%m-%d'),
+                'time':a.due_date.strftime('%I:%M %p').lstrip('0'),
+                'course':a.course or ''})
+    for e in all_evt:
+        if e.sort_date and not e.is_done:
+            cal_items.append({'type':'event','title':e.title,
+                'date':e.sort_date.strftime('%Y-%m-%d'),
+                'time':e.event_time or '', 'location':e.location or ''})
 
     return render_template('dashboard.html',
         user=user, now=now,
         pinned_asgn=pinned_asgn, unpinned_asgn=unpinned_asgn,
-        pinned_evt=pinned_evt,   unpinned_evt=unpinned_evt)
+        pinned_evt=pinned_evt,   unpinned_evt=unpinned_evt,
+        past_evt=past_evt, cal_items=cal_items)
 
 
 @app.route('/logout')
@@ -511,6 +530,15 @@ def api_reorder_events():
         if e: e.sort_order = i
     db.session.commit()
     return jsonify({'ok': True})
+
+
+@app.route('/api/done-event/<int:eid>', methods=['POST'])
+def api_done_event(eid):
+    if 'user_id' not in session: return jsonify({'error': 'Not logged in'}), 401
+    e = Event.query.filter_by(id=eid, user_id=session['user_id']).first_or_404()
+    e.is_done = not e.is_done
+    db.session.commit()
+    return jsonify({'ok': True, 'is_done': e.is_done})
 
 
 @app.route('/api/delete-event/<int:eid>', methods=['DELETE'])
