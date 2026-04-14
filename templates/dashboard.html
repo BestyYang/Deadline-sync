@@ -148,6 +148,28 @@
 
     .hidden { display: none !important; }
 
+    /* ── Pin & Drag ── */
+    .drag-handle { cursor: grab; color: #ccc; font-size: 18px; padding: 2px 6px 2px 0; flex-shrink: 0; line-height: 1; user-select: none; }
+    .drag-handle:hover { color: #aaa; }
+    .acard.dragging, .ecard.dragging { opacity: 0.3; }
+    .pin-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 3px; line-height: 1; opacity: 0.25; transition: opacity .15s; flex-shrink: 0; }
+    .pin-btn:hover { opacity: 1; }
+    .acard.pinned .pin-btn, .ecard.pinned .pin-btn { opacity: 1; }
+    .acard.pinned { border-left: 3px solid #f59e0b; }
+    .ecard.pinned { border-left: 3px solid #f59e0b; }
+    .pin-section-label { font-size: 10px; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; padding: 0 2px; }
+    .drag-group { min-height: 4px; }
+
+    /* ── Fold ── */
+    .acard-header { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+    .acard-body { margin-top: 10px; }
+    .acard.folded .acard-body { display: none; }
+    .fold-icon { font-size: 9px; color: #ccc; flex-shrink: 0; transition: transform .15s; margin-left: 2px; }
+    .acard.folded .fold-icon { transform: rotate(-90deg); }
+    .ecard-header { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+    .ecard-body { margin-top: 8px; border-top: 1px solid #f5f5f5; padding-top: 8px; }
+    .ecard.folded .ecard-body { display: none; }
+
     /* ── Mobile responsive ── */
     @media (max-width: 700px) {
       .topbar { padding: 0 16px; }
@@ -273,47 +295,80 @@
     <div class="col-hint">Email reminders sent 2 days and 5 hours before each deadline.</div>
 
     <div id="asgn-list">
-      {% if not assignments %}
+      {% if not pinned_asgn and not unpinned_asgn %}
       <div class="empty"><div class="empty-icon">🎉</div>Nothing yet!</div>
       {% else %}
-      {% for a in assignments %}
-      <div class="acard {% if a.is_done %}done{% endif %}" id="a{{ a.id }}">
-        <div class="acard-top">
-          <div>
-            <div class="course-tag">{{ a.course or 'Assignment' }}</div>
-            <div class="acard-title">{{ a.title }}</div>
-          </div>
-          <div class="acard-meta">
+
+      {# ── Pinned assignments ── #}
+      <div class="drag-group" id="pinned-asgn" data-type="assignment">
+        {% if pinned_asgn %}<div class="pin-section-label" id="pin-label-asgn">📌 Pinned</div>{% endif %}
+        {% for a in pinned_asgn %}
+        <div class="acard folded pinned {% if a.is_done %}done{% endif %}" id="a{{ a.id }}" draggable="true" data-id="{{ a.id }}">
+          <div class="acard-header" onclick="toggleFold(this)">
+            <span class="drag-handle" draggable="false" onclick="event.stopPropagation()">⠿</span>
+            <div style="flex:1;min-width:0;overflow:hidden;">
+              <div class="course-tag">{{ a.course or 'Assignment' }}</div>
+              <div class="acard-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.title }}</div>
+            </div>
             {% if a.due_date %}
-            <div class="due {% if not a.is_done and a.due_date < now %}overdue{% endif %}">
-              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %} &nbsp;<span style="color:#e85d04;font-weight:700;font-size:12px;">{% if diff == 0 %}· today{% elif diff == 1 %}· tomorrow{% else %}· {{ diff }} days away{% endif %}</span>{% endif %}
+            <div class="due {% if not a.is_done and a.due_date < now %}overdue{% endif %}" style="flex-shrink:0;text-align:right;font-size:11px;">
+              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %}<br><span style="color:#e85d04;font-weight:700;">{% if diff == 0 %}today{% elif diff == 1 %}tomorrow{% else %}{{ diff }} days{% endif %}</span>{% endif %}
             </div>
             {% endif %}
-            {% if a.points %}<div class="pts">{{ a.points }} pts</div>{% endif %}
+            <button class="pin-btn" onclick="event.stopPropagation();togglePinA({{ a.id }})" title="Unpin">📌</button>
+            <span class="fold-icon">▼</span>
+          </div>
+          <div class="acard-body">
+            {% if a.points %}<div class="pts" style="margin-bottom:6px;">{{ a.points }} pts</div>{% endif %}
+            {% if a.description %}<details class="reqs"><summary>View requirements</summary><p>{{ a.description }}</p></details>{% endif %}
+            <div class="acard-bottom">
+              <span class="sub-type">{{ a.submission_type }}</span>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})">{% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}</button>
+                <button class="btn btn-sm btn-gray edit-asgn-btn" data-id="{{ a.id }}" data-title="{{ a.title|e }}" data-course="{{ a.course|e }}" data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}" data-desc="{{ a.description|e }}" data-points="{{ a.points|e }}" data-sub="{{ a.submission_type|e }}">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})">Delete</button>
+              </div>
+            </div>
           </div>
         </div>
-        {% if a.description %}
-        <details class="reqs"><summary>View requirements</summary><p>{{ a.description }}</p></details>
-        {% endif %}
-        <div class="acard-bottom">
-          <span class="sub-type">{{ a.submission_type }}</span>
-          <div class="card-actions">
-            <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})">
-              {% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}
-            </button>
-            <button class="btn btn-sm btn-gray edit-asgn-btn"
-              data-id="{{ a.id }}"
-              data-title="{{ a.title|e }}"
-              data-course="{{ a.course|e }}"
-              data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}"
-              data-desc="{{ a.description|e }}"
-              data-points="{{ a.points|e }}"
-              data-sub="{{ a.submission_type|e }}">Edit</button>
-            <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})">Delete</button>
-          </div>
-        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
+
+      {# ── Unpinned assignments ── #}
+      <div class="drag-group" id="unpinned-asgn" data-type="assignment">
+        {% if pinned_asgn and unpinned_asgn %}<div style="height:6px"></div>{% endif %}
+        {% for a in unpinned_asgn %}
+        <div class="acard folded {% if a.is_done %}done{% endif %}" id="a{{ a.id }}" draggable="true" data-id="{{ a.id }}">
+          <div class="acard-header" onclick="toggleFold(this)">
+            <span class="drag-handle" draggable="false" onclick="event.stopPropagation()">⠿</span>
+            <div style="flex:1;min-width:0;overflow:hidden;">
+              <div class="course-tag">{{ a.course or 'Assignment' }}</div>
+              <div class="acard-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.title }}</div>
+            </div>
+            {% if a.due_date %}
+            <div class="due {% if not a.is_done and a.due_date < now %}overdue{% endif %}" style="flex-shrink:0;text-align:right;font-size:11px;">
+              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %}<br><span style="color:#e85d04;font-weight:700;">{% if diff == 0 %}today{% elif diff == 1 %}tomorrow{% else %}{{ diff }} days{% endif %}</span>{% endif %}
+            </div>
+            {% endif %}
+            <button class="pin-btn" onclick="event.stopPropagation();togglePinA({{ a.id }})" title="Pin">📌</button>
+            <span class="fold-icon">▼</span>
+          </div>
+          <div class="acard-body">
+            {% if a.points %}<div class="pts" style="margin-bottom:6px;">{{ a.points }} pts</div>{% endif %}
+            {% if a.description %}<details class="reqs"><summary>View requirements</summary><p>{{ a.description }}</p></details>{% endif %}
+            <div class="acard-bottom">
+              <span class="sub-type">{{ a.submission_type }}</span>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})">{% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}</button>
+                <button class="btn btn-sm btn-gray edit-asgn-btn" data-id="{{ a.id }}" data-title="{{ a.title|e }}" data-course="{{ a.course|e }}" data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}" data-desc="{{ a.description|e }}" data-points="{{ a.points|e }}" data-sub="{{ a.submission_type|e }}">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
       {% endif %}
     </div>
 
@@ -326,35 +381,62 @@
       <div class="col-hint">No reminders — just your schedule.</div>
 
       <div id="event-list">
-        {% if not events %}
+        {% if not pinned_evt and not unpinned_evt %}
         <div class="empty"><div class="empty-icon">📭</div>No events yet.</div>
         {% else %}
-        {% for e in events %}
-        <div class="ecard" id="e{{ e.id }}">
-          <div class="ecard-title">{{ e.title }}</div>
-          <div class="emeta">
-            {% if e.event_date or e.event_time %}
-            <div class="emeta-row"><span class="emeta-icon">🗓</span><span>{{ e.event_date }}{% if e.event_time %} · {{ e.event_time }}{% endif %}</span></div>
-            {% endif %}
-            {% if e.location %}
-            <div class="emeta-row"><span class="emeta-icon">📍</span><span>{{ e.location }}</span></div>
-            {% endif %}
+
+        {# ── Pinned events ── #}
+        <div class="drag-group" id="pinned-evt" data-type="event">
+          {% if pinned_evt %}<div class="pin-section-label" id="pin-label-evt">📌 Pinned</div>{% endif %}
+          {% for e in pinned_evt %}
+          <div class="ecard folded pinned" id="e{{ e.id }}" draggable="true" data-id="{{ e.id }}">
+            <div class="ecard-header" onclick="toggleFold(this)">
+              <span class="drag-handle" draggable="false" onclick="event.stopPropagation()">⠿</span>
+              <div style="flex:1;min-width:0;">
+                <div class="ecard-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ e.title }}</div>
+                {% if e.event_date or e.event_time %}<div style="font-size:11px;color:#888;margin-top:1px;">{{ e.event_date }}{% if e.event_time %} · {{ e.event_time }}{% endif %}</div>{% endif %}
+              </div>
+              <button class="pin-btn" onclick="event.stopPropagation();togglePinE({{ e.id }})" title="Unpin">📌</button>
+              <span class="fold-icon">▼</span>
+            </div>
+            <div class="ecard-body">
+              {% if e.location %}<div class="emeta-row"><span class="emeta-icon">📍</span><span>{{ e.location }}</span></div>{% endif %}
+              {% if e.details %}<div class="ecard-detail">{{ e.details }}</div>{% endif %}
+              <div class="ecard-foot">
+                <button class="btn btn-sm btn-gray edit-event-btn" data-id="{{ e.id }}" data-title="{{ e.title|e }}" data-date="{{ e.event_date|e }}" data-time="{{ e.event_time|e }}" data-location="{{ e.location|e }}" data-details="{{ e.details|e }}">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
+              </div>
+            </div>
           </div>
-          {% if e.details %}
-          <div class="ecard-detail">{{ e.details }}</div>
-          {% endif %}
-          <div class="ecard-foot">
-            <button class="btn btn-sm btn-gray edit-event-btn"
-              data-id="{{ e.id }}"
-              data-title="{{ e.title|e }}"
-              data-date="{{ e.event_date|e }}"
-              data-time="{{ e.event_time|e }}"
-              data-location="{{ e.location|e }}"
-              data-details="{{ e.details|e }}">Edit</button>
-            <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
-          </div>
+          {% endfor %}
         </div>
-        {% endfor %}
+
+        {# ── Unpinned events ── #}
+        <div class="drag-group" id="unpinned-evt" data-type="event">
+          {% if pinned_evt and unpinned_evt %}<div style="height:6px"></div>{% endif %}
+          {% for e in unpinned_evt %}
+          <div class="ecard folded" id="e{{ e.id }}" draggable="true" data-id="{{ e.id }}">
+            <div class="ecard-header" onclick="toggleFold(this)">
+              <span class="drag-handle" draggable="false" onclick="event.stopPropagation()">⠿</span>
+              <div style="flex:1;min-width:0;">
+                <div class="ecard-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ e.title }}</div>
+                {% if e.event_date or e.event_time %}<div style="font-size:11px;color:#888;margin-top:1px;">{{ e.event_date }}{% if e.event_time %} · {{ e.event_time }}{% endif %}</div>{% endif %}
+              </div>
+              <button class="pin-btn" onclick="event.stopPropagation();togglePinE({{ e.id }})" title="Pin">📌</button>
+              <span class="fold-icon">▼</span>
+            </div>
+            <div class="ecard-body">
+              {% if e.location %}<div class="emeta-row"><span class="emeta-icon">📍</span><span>{{ e.location }}</span></div>{% endif %}
+              {% if e.details %}<div class="ecard-detail">{{ e.details }}</div>{% endif %}
+              <div class="ecard-foot">
+                <button class="btn btn-sm btn-gray edit-event-btn" data-id="{{ e.id }}" data-title="{{ e.title|e }}" data-date="{{ e.event_date|e }}" data-time="{{ e.event_time|e }}" data-location="{{ e.location|e }}" data-details="{{ e.details|e }}">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
         {% endif %}
       </div>
     </div>
@@ -737,6 +819,109 @@
   function hideMsg() { msgBox.className = 'msg hidden'; }
   function x(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function dtl(iso) { return iso ? iso.slice(0,16) : ''; }
+
+  // ── Fold toggle ───────────────────────────────────────────────────────────
+  function toggleFold(header) {
+    header.closest('.acard, .ecard').classList.toggle('folded');
+  }
+
+  // ── Pin toggle ────────────────────────────────────────────────────────────
+  async function togglePinA(id) {
+    const res  = await fetch(`/api/pin/${id}`, {method:'POST'});
+    const data = await res.json();
+    const card = document.getElementById(`a${id}`);
+    card.classList.toggle('pinned', data.pinned);
+    const pinnedGrp   = document.getElementById('pinned-asgn');
+    const unpinnedGrp = document.getElementById('unpinned-asgn');
+    if (data.pinned) {
+      pinnedGrp.appendChild(card);
+      let lbl = document.getElementById('pin-label-asgn');
+      if (!lbl) {
+        lbl = document.createElement('div');
+        lbl.className = 'pin-section-label'; lbl.id = 'pin-label-asgn'; lbl.textContent = '📌 Pinned';
+        pinnedGrp.prepend(lbl);
+      }
+    } else {
+      unpinnedGrp.prepend(card);
+      if (!pinnedGrp.querySelector('.acard')) {
+        document.getElementById('pin-label-asgn')?.remove();
+      }
+    }
+  }
+
+  async function togglePinE(id) {
+    const res  = await fetch(`/api/pin-event/${id}`, {method:'POST'});
+    const data = await res.json();
+    const card = document.getElementById(`e${id}`);
+    card.classList.toggle('pinned', data.pinned);
+    const pinnedGrp   = document.getElementById('pinned-evt');
+    const unpinnedGrp = document.getElementById('unpinned-evt');
+    if (data.pinned) {
+      pinnedGrp.appendChild(card);
+      let lbl = document.getElementById('pin-label-evt');
+      if (!lbl) {
+        lbl = document.createElement('div');
+        lbl.className = 'pin-section-label'; lbl.id = 'pin-label-evt'; lbl.textContent = '📌 Pinned';
+        pinnedGrp.prepend(lbl);
+      }
+    } else {
+      unpinnedGrp.prepend(card);
+      if (!pinnedGrp.querySelector('.ecard')) {
+        document.getElementById('pin-label-evt')?.remove();
+      }
+    }
+  }
+
+  // ── Drag & Drop ───────────────────────────────────────────────────────────
+  let dragSrc = null;
+
+  function initDrag() {
+    document.querySelectorAll('.acard, .ecard').forEach(attachDrag);
+    document.querySelectorAll('.drag-group').forEach(attachGroupDrop);
+  }
+
+  function attachDrag(card) {
+    card.addEventListener('dragstart', e => {
+      dragSrc = card;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => card.classList.add('dragging'), 0);
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      dragSrc = null;
+    });
+  }
+
+  function attachGroupDrop(group) {
+    group.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!dragSrc) return;
+      const after = getDragAfter(group, e.clientY);
+      if (after) group.insertBefore(dragSrc, after);
+      else group.appendChild(dragSrc);
+    });
+    group.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragSrc) return;
+      const isEvt = group.dataset.type === 'event';
+      const ids = [...group.querySelectorAll(isEvt ? '.ecard' : '.acard')].map(el => el.dataset.id);
+      fetch(isEvt ? '/api/reorder-events' : '/api/reorder', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ids})
+      });
+    });
+  }
+
+  function getDragAfter(container, y) {
+    const els = [...container.querySelectorAll('.acard:not(.dragging), .ecard:not(.dragging)')];
+    return els.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) return {offset, element: child};
+      return closest;
+    }, {offset: Number.NEGATIVE_INFINITY}).element;
+  }
+
+  document.addEventListener('DOMContentLoaded', initDrag);
 </script>
 </body>
 </html>

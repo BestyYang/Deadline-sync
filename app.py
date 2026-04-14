@@ -47,6 +47,8 @@ class Assignment(db.Model):
     points          = db.Column(db.String(50), default='')
     submission_type = db.Column(db.String(100), default='')
     is_done         = db.Column(db.Boolean, default=False)
+    pinned          = db.Column(db.Boolean, default=False)
+    sort_order      = db.Column(db.Integer, nullable=True)
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
     alerts = db.relationship('Alert', backref='assignment', lazy=True, cascade='all, delete-orphan')
 
@@ -68,6 +70,8 @@ class Event(db.Model):
     event_time   = db.Column(db.String(100), default='')  # e.g. "3:00 PM"
     sort_date    = db.Column(db.DateTime, nullable=True)   # for chronological ordering
     details      = db.Column(db.Text, default='')
+    pinned       = db.Column(db.Boolean, default=False)
+    sort_order   = db.Column(db.Integer, nullable=True)
     created_at   = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -204,14 +208,25 @@ def dashboard():
         session.clear()
         return redirect(url_for('index'))
     now = datetime.now()
-    assignments = (
-        Assignment.query
-        .filter_by(user_id=user.id)
-        .order_by(Assignment.due_date.asc())
-        .all()
-    )
-    events = Event.query.filter_by(user_id=user.id).order_by(Event.sort_date.asc().nullslast(), Event.created_at.asc()).all()
-    return render_template('dashboard.html', user=user, assignments=assignments, events=events, now=now)
+
+    def split_sorted(items, date_attr):
+        def key(x):
+            d = getattr(x, date_attr)
+            return (x.sort_order if x.sort_order is not None else 99999,
+                    d if d else datetime.max)
+        pinned   = sorted([x for x in items if x.pinned],     key=key)
+        unpinned = sorted([x for x in items if not x.pinned], key=key)
+        return pinned, unpinned
+
+    all_asgn = Assignment.query.filter_by(user_id=user.id).all()
+    all_evt  = Event.query.filter_by(user_id=user.id).all()
+    pinned_asgn, unpinned_asgn = split_sorted(all_asgn, 'due_date')
+    pinned_evt,  unpinned_evt  = split_sorted(all_evt,  'sort_date')
+
+    return render_template('dashboard.html',
+        user=user, now=now,
+        pinned_asgn=pinned_asgn, unpinned_asgn=unpinned_asgn,
+        pinned_evt=pinned_evt,   unpinned_evt=unpinned_evt)
 
 
 @app.route('/logout')
@@ -441,6 +456,48 @@ def api_save_events():
         saved.append(e.get('title', ''))
     db.session.commit()
     return jsonify({'saved': saved})
+
+
+@app.route('/api/pin/<int:aid>', methods=['POST'])
+def api_pin(aid):
+    if 'user_id' not in session: return jsonify({'error': 'Not logged in'}), 401
+    a = Assignment.query.filter_by(id=aid, user_id=session['user_id']).first_or_404()
+    a.pinned = not a.pinned
+    a.sort_order = None
+    db.session.commit()
+    return jsonify({'pinned': a.pinned})
+
+
+@app.route('/api/pin-event/<int:eid>', methods=['POST'])
+def api_pin_event(eid):
+    if 'user_id' not in session: return jsonify({'error': 'Not logged in'}), 401
+    e = Event.query.filter_by(id=eid, user_id=session['user_id']).first_or_404()
+    e.pinned = not e.pinned
+    e.sort_order = None
+    db.session.commit()
+    return jsonify({'pinned': e.pinned})
+
+
+@app.route('/api/reorder', methods=['POST'])
+def api_reorder():
+    if 'user_id' not in session: return jsonify({'error': 'Not logged in'}), 401
+    data = request.get_json(force=True)
+    for i, aid in enumerate(data.get('ids', [])):
+        a = Assignment.query.filter_by(id=int(aid), user_id=session['user_id']).first()
+        if a: a.sort_order = i
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/reorder-events', methods=['POST'])
+def api_reorder_events():
+    if 'user_id' not in session: return jsonify({'error': 'Not logged in'}), 401
+    data = request.get_json(force=True)
+    for i, eid in enumerate(data.get('ids', [])):
+        e = Event.query.filter_by(id=int(eid), user_id=session['user_id']).first()
+        if e: e.sort_order = i
+    db.session.commit()
+    return jsonify({'ok': True})
 
 
 @app.route('/api/delete-event/<int:eid>', methods=['DELETE'])
