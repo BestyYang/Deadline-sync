@@ -249,10 +249,20 @@ def dashboard():
                 'time':a.due_date.strftime('%I:%M %p').lstrip('0'),
                 'course':a.course or ''})
     for e in all_evt:
-        if e.sort_date and not e.is_done:
+        if e.is_done:
+            continue
+        edate = None
+        if e.sort_date:
+            edate = e.sort_date.strftime('%Y-%m-%d')
+        elif e.event_date:
+            try:
+                from dateutil import parser as dp
+                edate = dp.parse(e.event_date, fuzzy=True).strftime('%Y-%m-%d')
+            except Exception:
+                pass
+        if edate:
             cal_items.append({'type':'event','title':e.title,
-                'date':e.sort_date.strftime('%Y-%m-%d'),
-                'time':e.event_time or '', 'location':e.location or ''})
+                'date':edate, 'time':e.event_time or '', 'location':e.location or ''})
 
     return render_template('dashboard.html',
         user=user, now=now,
