@@ -103,7 +103,7 @@
     }
     .acard.done { opacity: .45; }
     .acard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-    .course-tag { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #4f46e5; margin-bottom: 2px; }
+    .course-tag { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #4f46e5; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .acard-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
     .acard-meta { text-align: right; flex-shrink: 0; }
     .due { font-size: 12px; color: #888; white-space: nowrap; }
@@ -227,45 +227,58 @@
 
     /* ── Mobile responsive ── */
     @media (max-width: 700px) {
-      .topbar { padding: 0 12px; }
+      /* ── Prevent ANY horizontal overflow ── */
+      html, body { overflow-x: hidden; max-width: 100vw; }
+
+      /* ── Topbar: shrink everything to fit logo + 3 lang btns + logout ── */
+      .topbar { padding: 0 10px; }
+      .logo { font-size: 14px; }
       .user-email { display: none; }
+      .topbar-right { gap: 7px; }
+      .lang-switcher { gap: 2px; }
+      .lang-btn { padding: 3px 7px; font-size: 11px; }
+      .logout { font-size: 12px; padding: 4px 9px; }
 
+      /* ── Layout ── */
       .layout { flex-direction: column; padding: 16px 14px 60px; gap: 0; }
-
       .events-col { width: 100%; }
       .events-sticky { position: static; margin-top: 0; }
 
+      /* ── Input tabs ── */
       .input-tabs { flex-wrap: wrap; }
       .itab { flex: 1; text-align: center; padding: 8px 10px; }
 
-      /* Hide drag handle — HTML5 drag needs a mouse; useless on touch */
-      .drag-handle { display: none !important; }
-
-      /* Cards: slightly less padding on mobile */
+      /* ── Cards ── */
       .acard { padding: 12px 13px; }
       .ecard { padding: 11px 12px; }
 
-      /* Fold header: keep due-date always one line on mobile */
+      /* Hide drag handle — HTML5 drag is mouse-only, useless on touch */
+      .drag-handle { display: none !important; }
+
+      /* Due date: allow it to shrink and clip so it can't push card wider */
       .acard-header { gap: 5px; }
-      .due { font-size: 11px; max-width: 110px; }
-      /* Hide <br> before countdown so it appears inline, not on a second line */
+      .due { font-size: 11px; flex-shrink: 1; overflow: hidden;
+             text-overflow: ellipsis; max-width: 108px; white-space: nowrap; }
+      /* Suppress <br> so countdown shows inline on the same line */
       .due br { display: none; }
       .due span { margin-left: 3px; }
 
-      /* Fold icon slightly bigger hit area */
+      /* Fold / pin icons: slightly bigger hit area */
       .fold-icon { font-size: 11px; padding: 2px 4px; }
       .pin-btn   { padding: 4px 6px; font-size: 15px; }
 
-      /* Points badge — was 11px/1px padding, way too small on mobile */
+      /* Points badge — 11 px was too small to read on mobile */
       .pts { font-size: 13px !important; padding: 3px 10px !important; }
 
-      /* Bigger tap targets for action buttons */
+      /* Action buttons: bigger tap targets, wrap if needed */
       .card-actions { flex-wrap: wrap; gap: 6px; }
       .btn-sm { padding: 9px 15px; font-size: 13px; }
       .ecard-foot { flex-wrap: wrap; gap: 6px; }
 
+      /* Modal */
       .modal { padding: 20px 16px; border-radius: 12px; }
 
+      /* Row buttons: fill width */
       .row { flex-wrap: wrap; }
       .btn { flex: 1; text-align: center; }
     }
