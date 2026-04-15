@@ -227,10 +227,10 @@
 
     /* ── Mobile responsive ── */
     @media (max-width: 700px) {
-      .topbar { padding: 0 16px; }
+      .topbar { padding: 0 12px; }
       .user-email { display: none; }
 
-      .layout { flex-direction: column; padding: 20px 16px 60px; gap: 0; }
+      .layout { flex-direction: column; padding: 16px 14px 60px; gap: 0; }
 
       .events-col { width: 100%; }
       .events-sticky { position: static; margin-top: 0; }
@@ -238,13 +238,31 @@
       .input-tabs { flex-wrap: wrap; }
       .itab { flex: 1; text-align: center; padding: 8px 10px; }
 
-      .acard-top { flex-direction: column; gap: 4px; }
-      .acard-meta { text-align: left; flex-direction: row; gap: 8px; align-items: center; }
+      /* Hide drag handle — HTML5 drag needs a mouse; useless on touch */
+      .drag-handle { display: none !important; }
 
+      /* Cards: slightly less padding on mobile */
+      .acard { padding: 12px 13px; }
+      .ecard { padding: 11px 12px; }
+
+      /* Fold header: keep due-date always one line on mobile */
+      .acard-header { gap: 5px; }
+      .due { font-size: 11px; max-width: 110px; }
+      /* Hide <br> before countdown so it appears inline, not on a second line */
+      .due br { display: none; }
+      .due span { margin-left: 3px; }
+
+      /* Fold icon slightly bigger hit area */
+      .fold-icon { font-size: 11px; padding: 2px 4px; }
+      .pin-btn   { padding: 4px 6px; font-size: 15px; }
+
+      /* Points badge — was 11px/1px padding, way too small on mobile */
+      .pts { font-size: 13px !important; padding: 3px 10px !important; }
+
+      /* Bigger tap targets for action buttons */
       .card-actions { flex-wrap: wrap; gap: 6px; }
-      .btn-sm { padding: 7px 13px; font-size: 13px; }
-
-      .ecard-foot { gap: 8px; }
+      .btn-sm { padding: 9px 15px; font-size: 13px; }
+      .ecard-foot { flex-wrap: wrap; gap: 6px; }
 
       .modal { padding: 20px 16px; border-radius: 12px; }
 
