@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DeadlineSync</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -175,7 +176,15 @@
     .ecard.folded .ecard-body { display: none; }
 
     /* ── Calendar ── */
-    .cal-toggle-btn { background:#f0efff;color:#4f46e5;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:14px; }
+    .cal-toggle-btn {
+      background:#f0efff; color:#4f46e5; border:none; border-radius:9px;
+      padding:8px 16px; font-size:13px; font-weight:600;
+      /* Explicit font prevents iOS Safari button font-inheritance bug */
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      cursor:pointer; margin-bottom:14px;
+      /* Flex keeps emoji + text vertically centred and avoids emoji line-height issues */
+      display:inline-flex; align-items:center; gap:6px; line-height:1;
+    }
     .cal-toggle-btn:hover { background:#e0deff; }
     .cal-nav-btn { background:#ebebeb;border:none;border-radius:7px;padding:4px 10px;font-size:16px;cursor:pointer;line-height:1;font-family:inherit; }
     .cal-nav-btn:hover { background:#ddd; }
@@ -227,58 +236,82 @@
 
     /* ── Mobile responsive ── */
     @media (max-width: 700px) {
-      /* ── Prevent ANY horizontal overflow ── */
-      html, body { overflow-x: hidden; max-width: 100vw; }
+      /* ─ 1. Global overflow guard ─────────────────────────────────────────── */
+      html { overflow-x: hidden; }
+      body { overflow-x: hidden; width: 100%; }
 
-      /* ── Topbar: shrink everything to fit logo + 3 lang btns + logout ── */
+      /* ─ 2. Topbar ─────────────────────────────────────────────────────────
+         logo + 3 lang-btns + logout must all fit ≤ 390px                       */
       .topbar { padding: 0 10px; }
       .logo { font-size: 14px; }
       .user-email { display: none; }
-      .topbar-right { gap: 7px; }
+      .topbar-right { gap: 6px; }
       .lang-switcher { gap: 2px; }
-      .lang-btn { padding: 3px 7px; font-size: 11px; }
-      .logout { font-size: 12px; padding: 4px 9px; }
+      .lang-btn { padding: 3px 6px; font-size: 11px; }
+      .logout { font-size: 12px; padding: 4px 8px; }
 
-      /* ── Layout ── */
-      .layout { flex-direction: column; padding: 16px 14px 60px; gap: 0; }
-      .events-col { width: 100%; }
+      /* ─ 3. Layout ─────────────────────────────────────────────────────────
+         THE ROOT FIX: desktop sets align-items:flex-start so columns size to
+         their content.  On mobile we need columns to STRETCH to full width.    */
+      .layout {
+        flex-direction: column;
+        align-items: stretch;          /* override flex-start → columns fill width */
+        padding: 16px 16px 60px;
+        gap: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .main-col  { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+      .events-col { width: 100%; max-width: 100%; box-sizing: border-box; }
       .events-sticky { position: static; margin-top: 0; }
 
-      /* ── Input tabs ── */
+      /* ─ 4. Paste area + inputs ────────────────────────────────────────────
+         Explicit 100% width stops the dashed box from overflowing.             */
+      .paste-area { width: 100%; box-sizing: border-box; }
+      .pinput     { width: 100%; box-sizing: border-box; }
+
+      /* ─ 5. Input tabs ─────────────────────────────────────────────────────  */
       .input-tabs { flex-wrap: wrap; }
       .itab { flex: 1; text-align: center; padding: 8px 10px; }
 
-      /* ── Cards ── */
+      /* ─ 6. Cards ──────────────────────────────────────────────────────────  */
       .acard { padding: 12px 13px; }
       .ecard { padding: 11px 12px; }
 
       /* Hide drag handle — HTML5 drag is mouse-only, useless on touch */
       .drag-handle { display: none !important; }
 
-      /* Due date: allow it to shrink and clip so it can't push card wider */
+      /* Due date: shrink + clip so long dates never push the card wider */
       .acard-header { gap: 5px; }
-      .due { font-size: 11px; flex-shrink: 1; overflow: hidden;
-             text-overflow: ellipsis; max-width: 108px; white-space: nowrap; }
-      /* Suppress <br> so countdown shows inline on the same line */
+      .due {
+        font-size: 11px; flex-shrink: 1; overflow: hidden;
+        text-overflow: ellipsis; max-width: 108px; white-space: nowrap;
+      }
+      /* Suppress <br> so countdown appears inline, not on a second line */
       .due br { display: none; }
       .due span { margin-left: 3px; }
 
-      /* Fold / pin icons: slightly bigger hit area */
+      /* Fold / pin icons */
       .fold-icon { font-size: 11px; padding: 2px 4px; }
       .pin-btn   { padding: 4px 6px; font-size: 15px; }
 
-      /* Points badge — 11 px was too small to read on mobile */
+      /* Points badge */
       .pts { font-size: 13px !important; padding: 3px 10px !important; }
 
-      /* Action buttons: bigger tap targets, wrap if needed */
+      /* ─ 7. Calendar button ────────────────────────────────────────────────
+         44px min-height meets Apple touch-target guideline.                    */
+      .cal-toggle-btn { min-height: 44px; font-size: 14px; padding: 10px 18px; }
+
+      /* ─ 8. Action buttons ─────────────────────────────────────────────────  */
       .card-actions { flex-wrap: wrap; gap: 6px; }
       .btn-sm { padding: 9px 15px; font-size: 13px; }
       .ecard-foot { flex-wrap: wrap; gap: 6px; }
 
-      /* Modal */
+      /* ─ 9. Modal ──────────────────────────────────────────────────────────  */
       .modal { padding: 20px 16px; border-radius: 12px; }
 
-      /* Row buttons: fill width */
+      /* ─ 10. Row buttons (Extract / Clear) ────────────────────────────────  */
       .row { flex-wrap: wrap; }
       .btn { flex: 1; text-align: center; }
     }
