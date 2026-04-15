@@ -22,6 +22,10 @@
     .user-email { font-size: 13px; color: #999; }
     .logout { font-size: 13px; color: #999; text-decoration: none; padding: 5px 11px; border: 1px solid #e5e5e5; border-radius: 7px; }
     .logout:hover { background: #f5f5f5; color: #333; }
+    .lang-switcher { display: flex; gap: 3px; }
+    .lang-btn { padding: 4px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1.5px solid #e5e5e5; cursor: pointer; background: #fff; color: #666; font-family: inherit; transition: background .15s, border-color .15s; }
+    .lang-btn:hover { background: #f5f5f5; }
+    .lang-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
 
     /* ── Layout ── */
     .layout { display: flex; gap: 24px; max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; align-items: flex-start; }
@@ -255,7 +259,12 @@
   <div class="logo">📅 DeadlineSync</div>
   <div class="topbar-right">
     <span class="user-email">{{ user.email }}</span>
-    <a href="/logout" class="logout">Log out</a>
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="en" onclick="switchLang('en')">EN</button>
+      <button class="lang-btn" data-lang="zh" onclick="switchLang('zh')">中文</button>
+      <button class="lang-btn" data-lang="es" onclick="switchLang('es')">ES</button>
+    </div>
+    <a href="/logout" class="logout" data-i18n="logout">Log out</a>
   </div>
 </div>
 
@@ -264,13 +273,13 @@
   <!-- ── Left: Assignments ── -->
   <div class="main-col">
 
-    <div class="col-title">Add new</div>
+    <div class="col-title" data-i18n="add_new">Add new</div>
 
     <!-- Input mode tabs -->
     <div class="input-tabs">
-      <button class="itab active" id="itab-assignments" onclick="setMode('assignments')">📋 Assignment</button>
-      <button class="itab" id="itab-events" onclick="setMode('events')">📅 Event</button>
-      <button class="itab" id="itab-manual" onclick="setMode('manual')">✏️ Manual</button>
+      <button class="itab active" id="itab-assignments" onclick="setMode('assignments')" data-i18n="tab_assignment">📋 Assignment</button>
+      <button class="itab" id="itab-events" onclick="setMode('events')" data-i18n="tab_event">📅 Event</button>
+      <button class="itab" id="itab-manual" onclick="setMode('manual')" data-i18n="tab_manual">✏️ Manual</button>
     </div>
     <div id="paste-hint" class="col-hint">Paste Canvas content — AI extracts deadlines.</div>
 
@@ -278,52 +287,52 @@
     <div id="paste-ui">
       <div id="paste" class="paste-area" contenteditable="true"></div>
       <div class="row">
-        <button class="btn btn-purple" id="btn-extract">Extract</button>
-        <button class="btn btn-gray"   id="btn-clear">Clear</button>
+        <button class="btn btn-purple" id="btn-extract" data-i18n="btn_extract">Extract</button>
+        <button class="btn btn-gray"   id="btn-clear" data-i18n="btn_clear">Clear</button>
       </div>
     </div>
 
     <!-- Manual add form -->
     <div id="manual-ui" class="hidden">
       <div class="manual-type-row">
-        <button class="mtype active" id="mtype-assignment" onclick="setManualType('assignment')">Assignment</button>
-        <button class="mtype" id="mtype-event" onclick="setManualType('event')">Event</button>
+        <button class="mtype active" id="mtype-assignment" onclick="setManualType('assignment')" data-i18n="manual_type_assignment">Assignment</button>
+        <button class="mtype" id="mtype-event" onclick="setManualType('event')" data-i18n="manual_type_event">Event</button>
       </div>
 
       <!-- Manual assignment fields -->
       <div id="manual-assignment-fields">
-        <span class="preview-label">Title *</span>
+        <span class="preview-label" data-i18n="label_title">Title *</span>
         <input class="pinput" id="ma-title" placeholder="e.g. Problem Set 4">
-        <span class="preview-label">Due date</span>
+        <span class="preview-label" data-i18n="label_due">Due date</span>
         <input class="pinput" id="ma-due" type="datetime-local">
-        <span class="preview-label">Course</span>
+        <span class="preview-label" data-i18n="label_course">Course</span>
         <input class="pinput" id="ma-course" placeholder="e.g. Capital Markets">
-        <span class="preview-label">Details</span>
+        <span class="preview-label" data-i18n="label_details">Details</span>
         <textarea class="pinput ptextarea" id="ma-desc" placeholder="Optional notes"></textarea>
-        <span class="preview-label">Points</span>
+        <span class="preview-label" data-i18n="label_points">Points</span>
         <input class="pinput" id="ma-points" placeholder="e.g. 100">
       </div>
 
       <!-- Manual event fields -->
       <div id="manual-event-fields" class="hidden">
-        <span class="preview-label">Title *</span>
+        <span class="preview-label" data-i18n="label_title">Title *</span>
         <input class="pinput" id="me-title" placeholder="e.g. LPE Society Talk">
-        <span class="preview-label">Date</span>
+        <span class="preview-label" data-i18n="label_date">Date</span>
         <input class="pinput" id="me-date" placeholder="e.g. Monday, Apr 21">
-        <span class="preview-label">Time</span>
+        <span class="preview-label" data-i18n="label_time">Time</span>
         <input class="pinput" id="me-time" placeholder="e.g. 12:00 PM">
-        <span class="preview-label">Location</span>
+        <span class="preview-label" data-i18n="label_location">Location</span>
         <input class="pinput" id="me-location" placeholder="e.g. BW 208">
-        <span class="preview-label">Details</span>
+        <span class="preview-label" data-i18n="label_details">Details</span>
         <textarea class="pinput ptextarea" id="me-details" placeholder="Optional notes"></textarea>
       </div>
 
       <div class="row" style="margin-top:14px;">
-        <button class="btn btn-purple" id="btn-manual-save">Add to my list</button>
+        <button class="btn btn-purple" id="btn-manual-save" data-i18n="btn_add">Add to my list</button>
       </div>
       <div id="manual-msg" class="msg hidden"></div>
     </div>
-    <div id="loading" class="loading hidden"><div class="spin"></div> Reading…</div>
+    <div id="loading" class="loading hidden"><div class="spin"></div><span data-i18n="reading"> Reading…</span></div>
     <div id="msg" class="msg hidden"></div>
 
     <!-- Preview section -->
@@ -334,19 +343,19 @@
       <div id="preview-events" class="hidden"></div>
 
       <div class="row" style="margin-top:14px;">
-        <button class="btn btn-purple" id="btn-confirm">Save all to my list</button>
-        <button class="btn btn-gray"   id="btn-cancel">Cancel</button>
+        <button class="btn btn-purple" id="btn-confirm" data-i18n="btn_save_all">Save all to my list</button>
+        <button class="btn btn-gray"   id="btn-cancel" data-i18n="btn_cancel">Cancel</button>
       </div>
     </div>
 
     <div class="divider"></div>
 
     <!-- Calendar -->
-    <button class="cal-toggle-btn" onclick="toggleCalendar()">📅 Calendar</button>
+    <button class="cal-toggle-btn" onclick="toggleCalendar()" data-i18n="cal_toggle">📅 Calendar</button>
     <div id="cal-section" class="hidden">
       <div class="cal-controls">
-        <button class="cal-range-btn active" data-days="7" onclick="setCalRange(7)">7 days</button>
-        <button class="cal-range-btn" data-days="3" onclick="setCalRange(3)">3 days</button>
+        <button class="cal-range-btn active" data-days="7" onclick="setCalRange(7)" data-i18n="cal_7days">7 days</button>
+        <button class="cal-range-btn" data-days="3" onclick="setCalRange(3)" data-i18n="cal_3days">3 days</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
           <button class="cal-nav-btn" onclick="shiftWeek(-1)">‹</button>
           <span id="cal-week-label" style="font-size:12px;color:#888;min-width:90px;text-align:center;"></span>
@@ -361,8 +370,8 @@
     <div class="divider"></div>
 
     <!-- Assignment list -->
-    <div class="col-title" style="font-size:16px;">Assignments</div>
-    <div class="col-hint">Email reminders sent 2 days and 5 hours before each deadline.</div>
+    <div class="col-title" style="font-size:16px;" data-i18n="section_assignments">Assignments</div>
+    <div class="col-hint" data-i18n="hint_assignments">Email reminders sent 2 days and 5 hours before each deadline.</div>
 
     <div id="asgn-list">
       {% if not pinned_asgn and not unpinned_asgn %}
@@ -371,7 +380,7 @@
 
       {# ── Pinned assignments ── #}
       <div class="drag-group" id="pinned-asgn" data-type="assignment">
-        {% if pinned_asgn %}<div class="pin-section-label" id="pin-label-asgn">📌 Pinned</div>{% endif %}
+        {% if pinned_asgn %}<div class="pin-section-label" id="pin-label-asgn" data-i18n="pinned_label">📌 Pinned</div>{% endif %}
         {% for a in pinned_asgn %}
         <div class="acard folded pinned {% if a.is_done %}done{% endif %}" id="a{{ a.id }}" draggable="true" data-id="{{ a.id }}">
           <div class="acard-header" onclick="toggleFold(this)">
@@ -382,7 +391,7 @@
             </div>
             {% if a.due_date %}
             <div class="due {% if not a.is_done and a.due_date < now %}overdue{% endif %}" style="flex-shrink:0;text-align:right;font-size:11px;">
-              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %}<br><span style="color:#e85d04;font-weight:700;">{% if diff == 0 %}today{% elif diff == 1 %}tomorrow{% else %}{{ diff }} days{% endif %}</span>{% endif %}
+              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %}<br><span style="color:#e85d04;font-weight:700;" data-i18n="{% if diff == 0 %}countdown_today{% elif diff == 1 %}countdown_tomorrow{% else %}countdown_days{% endif %}"{% if diff > 1 %} data-n="{{ diff }}"{% endif %}>{% if diff == 0 %}today{% elif diff == 1 %}tomorrow{% else %}{{ diff }} days{% endif %}</span>{% endif %}
             </div>
             {% endif %}
             <button class="pin-btn" onclick="event.stopPropagation();togglePinA({{ a.id }})" title="Unpin">📌</button>
@@ -390,13 +399,13 @@
           </div>
           <div class="acard-body">
             {% if a.points %}<div class="pts" style="margin-bottom:6px;">{{ a.points }} pts</div>{% endif %}
-            {% if a.description %}<details class="reqs"><summary>View requirements</summary><p>{{ a.description }}</p></details>{% endif %}
+            {% if a.description %}<details class="reqs"><summary data-i18n="view_reqs">View requirements</summary><p>{{ a.description }}</p></details>{% endif %}
             <div class="acard-bottom">
               <span class="sub-type">{{ a.submission_type }}</span>
               <div class="card-actions">
-                <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})">{% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}</button>
-                <button class="btn btn-sm btn-gray edit-asgn-btn" data-id="{{ a.id }}" data-title="{{ a.title|e }}" data-course="{{ a.course|e }}" data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}" data-desc="{{ a.description|e }}" data-points="{{ a.points|e }}" data-sub="{{ a.submission_type|e }}">Edit</button>
-                <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})">Delete</button>
+                <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})" data-i18n="{% if a.is_done %}undo{% else %}mark_done{% endif %}">{% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}</button>
+                <button class="btn btn-sm btn-gray edit-asgn-btn" data-id="{{ a.id }}" data-title="{{ a.title|e }}" data-course="{{ a.course|e }}" data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}" data-desc="{{ a.description|e }}" data-points="{{ a.points|e }}" data-sub="{{ a.submission_type|e }}" data-i18n="edit">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})" data-i18n="delete_btn">Delete</button>
               </div>
             </div>
           </div>
@@ -417,7 +426,7 @@
             </div>
             {% if a.due_date %}
             <div class="due {% if not a.is_done and a.due_date < now %}overdue{% endif %}" style="flex-shrink:0;text-align:right;font-size:11px;">
-              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %}<br><span style="color:#e85d04;font-weight:700;">{% if diff == 0 %}today{% elif diff == 1 %}tomorrow{% else %}{{ diff }} days{% endif %}</span>{% endif %}
+              {{ a.due_date.strftime('%a %b %d · %I:%M %p') }}{% set diff = (a.due_date.date() - now.date()).days %}{% if not a.is_done and diff >= 0 and diff < 5 %}<br><span style="color:#e85d04;font-weight:700;" data-i18n="{% if diff == 0 %}countdown_today{% elif diff == 1 %}countdown_tomorrow{% else %}countdown_days{% endif %}"{% if diff > 1 %} data-n="{{ diff }}"{% endif %}>{% if diff == 0 %}today{% elif diff == 1 %}tomorrow{% else %}{{ diff }} days{% endif %}</span>{% endif %}
             </div>
             {% endif %}
             <button class="pin-btn" onclick="event.stopPropagation();togglePinA({{ a.id }})" title="Pin">📌</button>
@@ -425,13 +434,13 @@
           </div>
           <div class="acard-body">
             {% if a.points %}<div class="pts" style="margin-bottom:6px;">{{ a.points }} pts</div>{% endif %}
-            {% if a.description %}<details class="reqs"><summary>View requirements</summary><p>{{ a.description }}</p></details>{% endif %}
+            {% if a.description %}<details class="reqs"><summary data-i18n="view_reqs">View requirements</summary><p>{{ a.description }}</p></details>{% endif %}
             <div class="acard-bottom">
               <span class="sub-type">{{ a.submission_type }}</span>
               <div class="card-actions">
-                <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})">{% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}</button>
-                <button class="btn btn-sm btn-gray edit-asgn-btn" data-id="{{ a.id }}" data-title="{{ a.title|e }}" data-course="{{ a.course|e }}" data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}" data-desc="{{ a.description|e }}" data-points="{{ a.points|e }}" data-sub="{{ a.submission_type|e }}">Edit</button>
-                <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})">Delete</button>
+                <button class="btn btn-sm btn-green" onclick="toggleDone({{ a.id }})" data-i18n="{% if a.is_done %}undo{% else %}mark_done{% endif %}">{% if a.is_done %}↩ Undo{% else %}Mark done{% endif %}</button>
+                <button class="btn btn-sm btn-gray edit-asgn-btn" data-id="{{ a.id }}" data-title="{{ a.title|e }}" data-course="{{ a.course|e }}" data-due="{{ a.due_date.strftime('%Y-%m-%dT%H:%M') if a.due_date else '' }}" data-desc="{{ a.description|e }}" data-points="{{ a.points|e }}" data-sub="{{ a.submission_type|e }}" data-i18n="edit">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delAssignment({{ a.id }})" data-i18n="delete_btn">Delete</button>
               </div>
             </div>
           </div>
@@ -447,8 +456,8 @@
   <!-- ── Right: Events sidebar ── -->
   <div class="events-col">
     <div class="events-sticky">
-      <div class="col-title" style="font-size:16px;">Events</div>
-      <div class="col-hint">No reminders — just your schedule.</div>
+      <div class="col-title" style="font-size:16px;" data-i18n="section_events">Events</div>
+      <div class="col-hint" data-i18n="hint_events">No reminders — just your schedule.</div>
 
       <div id="event-list">
         {% if not pinned_evt and not unpinned_evt %}
@@ -457,7 +466,7 @@
 
         {# ── Pinned events ── #}
         <div class="drag-group" id="pinned-evt" data-type="event">
-          {% if pinned_evt %}<div class="pin-section-label" id="pin-label-evt">📌 Pinned</div>{% endif %}
+          {% if pinned_evt %}<div class="pin-section-label" id="pin-label-evt" data-i18n="pinned_label">📌 Pinned</div>{% endif %}
           {% for e in pinned_evt %}
           <div class="ecard folded pinned" id="e{{ e.id }}" draggable="true" data-id="{{ e.id }}">
             <div class="ecard-header" onclick="toggleFold(this)">
@@ -473,9 +482,9 @@
               {% if e.location %}<div class="emeta-row"><span class="emeta-icon">📍</span><span>{{ e.location }}</span></div>{% endif %}
               {% if e.details %}<div class="ecard-detail">{{ e.details }}</div>{% endif %}
               <div class="ecard-foot">
-                <button class="btn btn-sm btn-green" onclick="toggleDoneEvent({{ e.id }})">Mark attended</button>
-                <button class="btn btn-sm btn-gray edit-event-btn" data-id="{{ e.id }}" data-title="{{ e.title|e }}" data-date="{{ e.event_date|e }}" data-time="{{ e.event_time|e }}" data-location="{{ e.location|e }}" data-details="{{ e.details|e }}">Edit</button>
-                <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
+                <button class="btn btn-sm btn-green" onclick="toggleDoneEvent({{ e.id }})" data-i18n="mark_attended">Mark attended</button>
+                <button class="btn btn-sm btn-gray edit-event-btn" data-id="{{ e.id }}" data-title="{{ e.title|e }}" data-date="{{ e.event_date|e }}" data-time="{{ e.event_time|e }}" data-location="{{ e.location|e }}" data-details="{{ e.details|e }}" data-i18n="edit">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})" data-i18n="delete_btn">Delete</button>
               </div>
             </div>
           </div>
@@ -500,9 +509,9 @@
               {% if e.location %}<div class="emeta-row"><span class="emeta-icon">📍</span><span>{{ e.location }}</span></div>{% endif %}
               {% if e.details %}<div class="ecard-detail">{{ e.details }}</div>{% endif %}
               <div class="ecard-foot">
-                <button class="btn btn-sm btn-green" onclick="toggleDoneEvent({{ e.id }})">Mark attended</button>
-                <button class="btn btn-sm btn-gray edit-event-btn" data-id="{{ e.id }}" data-title="{{ e.title|e }}" data-date="{{ e.event_date|e }}" data-time="{{ e.event_time|e }}" data-location="{{ e.location|e }}" data-details="{{ e.details|e }}">Edit</button>
-                <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
+                <button class="btn btn-sm btn-green" onclick="toggleDoneEvent({{ e.id }})" data-i18n="mark_attended">Mark attended</button>
+                <button class="btn btn-sm btn-gray edit-event-btn" data-id="{{ e.id }}" data-title="{{ e.title|e }}" data-date="{{ e.event_date|e }}" data-time="{{ e.event_time|e }}" data-location="{{ e.location|e }}" data-details="{{ e.details|e }}" data-i18n="edit">Edit</button>
+                <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})" data-i18n="delete_btn">Delete</button>
               </div>
             </div>
           </div>
@@ -514,7 +523,7 @@
         <div style="margin-top:10px;">
           <details id="past-evt-details">
             <summary style="font-size:12px;font-weight:700;color:#bbb;cursor:pointer;padding:6px 2px;list-style:none;display:flex;align-items:center;gap:6px;">
-              <span>▶</span> Past events ({{ past_evt|length }})
+              <span>▶</span> <span data-i18n="past_events">Past events</span> ({{ past_evt|length }})
             </summary>
             {% for e in past_evt %}
             <div class="ecard folded" id="e{{ e.id }}" style="opacity:.5;margin-top:6px;">
@@ -527,8 +536,8 @@
               </div>
               <div class="ecard-body">
                 <div class="ecard-foot">
-                  <button class="btn btn-sm btn-gray" onclick="toggleDoneEvent({{ e.id }})">↩ Undo</button>
-                  <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})">Delete</button>
+                  <button class="btn btn-sm btn-gray" onclick="toggleDoneEvent({{ e.id }})" data-i18n="undo">↩ Undo</button>
+                  <button class="btn btn-sm btn-red" onclick="delEvent({{ e.id }})" data-i18n="delete_btn">Delete</button>
                 </div>
               </div>
             </div>
@@ -550,42 +559,171 @@
     <div class="modal-title" id="modal-title">Edit</div>
 
     <div id="modal-assignment-fields">
-      <span class="preview-label">Title</span>
+      <span class="preview-label" data-i18n="label_title_plain">Title</span>
       <input class="pinput" id="edit-title" placeholder="Title">
-      <span class="preview-label">Due date</span>
+      <span class="preview-label" data-i18n="label_due">Due date</span>
       <input class="pinput" id="edit-due" type="datetime-local">
-      <span class="preview-label">Course</span>
+      <span class="preview-label" data-i18n="label_course">Course</span>
       <input class="pinput" id="edit-course" placeholder="Course">
-      <span class="preview-label">Details</span>
+      <span class="preview-label" data-i18n="label_details">Details</span>
       <textarea class="pinput ptextarea" id="edit-desc"></textarea>
-      <span class="preview-label">Points</span>
+      <span class="preview-label" data-i18n="label_points">Points</span>
       <input class="pinput" id="edit-points" placeholder="e.g. 100">
-      <span class="preview-label">Submission</span>
+      <span class="preview-label" data-i18n="label_submission">Submission</span>
       <input class="pinput" id="edit-submission" placeholder="e.g. Online">
     </div>
 
     <div id="modal-event-fields" class="hidden">
-      <span class="preview-label">Title</span>
+      <span class="preview-label" data-i18n="label_title_plain">Title</span>
       <input class="pinput" id="eedit-title" placeholder="Title">
-      <span class="preview-label">Date</span>
+      <span class="preview-label" data-i18n="label_date">Date</span>
       <input class="pinput" id="eedit-date" placeholder="e.g. Monday, Apr 21">
-      <span class="preview-label">Time</span>
+      <span class="preview-label" data-i18n="label_time">Time</span>
       <input class="pinput" id="eedit-time" placeholder="e.g. 12:00 PM">
-      <span class="preview-label">Location</span>
+      <span class="preview-label" data-i18n="label_location">Location</span>
       <input class="pinput" id="eedit-location" placeholder="e.g. BW 208">
-      <span class="preview-label">Details</span>
+      <span class="preview-label" data-i18n="label_details">Details</span>
       <textarea class="pinput ptextarea" id="eedit-details"></textarea>
     </div>
 
     <div class="row" style="margin-top:16px;">
-      <button class="btn btn-purple" id="btn-modal-save">Save</button>
-      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-purple" id="btn-modal-save" data-i18n="modal_save">Save</button>
+      <button class="btn btn-gray" onclick="closeModal()" data-i18n="btn_cancel">Cancel</button>
     </div>
     <div id="modal-msg" class="msg hidden"></div>
   </div>
 </div>
 
 <script>
+  // ── Translations ─────────────────────────────────────────────────────────────
+  const TRANSLATIONS = {
+    en: {
+      logout:'Log out', add_new:'Add new',
+      tab_assignment:'📋 Assignment', tab_event:'📅 Event', tab_manual:'✏️ Manual',
+      paste_hint_assignment:'Paste Canvas content — AI extracts deadlines.',
+      paste_hint_event:'Paste a flyer, email, or announcement — AI grabs any event it finds.',
+      paste_hint_manual:'Fill in the details below.',
+      btn_extract:'Extract', btn_clear:'Clear', reading:' Reading…',
+      btn_save_all:'Save all to my list', btn_cancel:'Cancel', btn_add:'Add to my list',
+      manual_type_assignment:'Assignment', manual_type_event:'Event',
+      label_title:'Title *', label_title_plain:'Title', label_due:'Due date',
+      label_course:'Course', label_details:'Details', label_points:'Points',
+      label_date:'Date', label_time:'Time', label_location:'Location', label_submission:'Submission',
+      section_assignments:'Assignments', hint_assignments:'Email reminders sent 2 days and 5 hours before each deadline.',
+      section_events:'Events', hint_events:'No reminders — just your schedule.',
+      cal_toggle:'📅 Calendar', cal_7days:'7 days', cal_3days:'3 days',
+      cal_this_week:'This week', cal_next_week:'Next week', cal_last_week:'Last week',
+      pinned_label:'📌 Pinned',
+      view_reqs:'View requirements',
+      countdown_today:'today', countdown_tomorrow:'tomorrow',
+      days_label: n => `${n} days`,
+      mark_done:'Mark done', undo:'↩ Undo', edit:'Edit', delete_btn:'Delete',
+      mark_attended:'Mark attended', past_events:'Past events',
+      modal_edit_asgn:'Edit Assignment', modal_edit_evt:'Edit Event', modal_save:'Save',
+      no_date_banner:'📅 No deadline found — please set one below',
+      paste_first:'Paste something first.',
+      nothing_found:'Nothing found. Try pasting more content.',
+      could_not_save:'Could not save. Try again.',
+      title_required:'Title is required.',
+      saved_refreshing:'Saved! Refreshing…',
+      saved_msg: n => `Saved ${n} item(s)! Refreshing…`,
+      delete_asgn_confirm:'Delete this assignment?',
+      delete_evt_confirm:'Delete this event?',
+      nothing_found_preview:'Nothing found.',
+      no_events_found:'No events found.',
+      nothing_day:'Nothing this day 🎉',
+      cal_nothing:'Nothing',
+      day_short:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+      day_long:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+      mon_short:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      mon_long:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    },
+    zh: {
+      logout:'退出登录', add_new:'添加新项目',
+      tab_assignment:'📋 作业', tab_event:'📅 活动', tab_manual:'✏️ 手动添加',
+      paste_hint_assignment:'粘贴 Canvas 内容，AI 自动提取截止日期。',
+      paste_hint_event:'粘贴传单、邮件或公告，AI 自动识别活动。',
+      paste_hint_manual:'请填写以下信息。',
+      btn_extract:'提取', btn_clear:'清除', reading:' 读取中…',
+      btn_save_all:'保存到我的列表', btn_cancel:'取消', btn_add:'添加到列表',
+      manual_type_assignment:'作业', manual_type_event:'活动',
+      label_title:'标题 *', label_title_plain:'标题', label_due:'截止日期',
+      label_course:'课程', label_details:'详情', label_points:'分数',
+      label_date:'日期', label_time:'时间', label_location:'地点', label_submission:'提交方式',
+      section_assignments:'作业', hint_assignments:'截止日期前 2 天和 5 小时将发送提醒邮件。',
+      section_events:'活动', hint_events:'无提醒 — 仅查看日程安排。',
+      cal_toggle:'📅 日历', cal_7days:'7 天', cal_3days:'3 天',
+      cal_this_week:'本周', cal_next_week:'下周', cal_last_week:'上周',
+      pinned_label:'📌 已置顶',
+      view_reqs:'查看要求',
+      countdown_today:'今天', countdown_tomorrow:'明天',
+      days_label: n => `${n} 天后`,
+      mark_done:'标记完成', undo:'↩ 撤销', edit:'编辑', delete_btn:'删除',
+      mark_attended:'标记已参加', past_events:'过去的活动',
+      modal_edit_asgn:'编辑作业', modal_edit_evt:'编辑活动', modal_save:'保存',
+      no_date_banner:'📅 未找到截止日期 — 请在下方设置',
+      paste_first:'请先粘贴内容。',
+      nothing_found:'未找到内容，请粘贴更多详情。',
+      could_not_save:'保存失败，请重试。',
+      title_required:'标题为必填项。',
+      saved_refreshing:'已保存！正在刷新…',
+      saved_msg: n => `已保存 ${n} 条！正在刷新…`,
+      delete_asgn_confirm:'确定要删除此作业吗？',
+      delete_evt_confirm:'确定要删除此活动吗？',
+      nothing_found_preview:'未找到内容。',
+      no_events_found:'未找到活动。',
+      nothing_day:'今天没有日程 🎉',
+      cal_nothing:'无',
+      day_short:['日','一','二','三','四','五','六'],
+      day_long:['星期日','星期一','星期二','星期三','星期四','星期五','星期六'],
+      mon_short:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+      mon_long:['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'],
+    },
+    es: {
+      logout:'Cerrar sesión', add_new:'Agregar nuevo',
+      tab_assignment:'📋 Tarea', tab_event:'📅 Evento', tab_manual:'✏️ Manual',
+      paste_hint_assignment:'Pega contenido de Canvas — la IA extrae los plazos.',
+      paste_hint_event:'Pega un flyer, correo o anuncio — la IA detecta eventos.',
+      paste_hint_manual:'Completa los detalles a continuación.',
+      btn_extract:'Extraer', btn_clear:'Limpiar', reading:' Leyendo…',
+      btn_save_all:'Guardar en mi lista', btn_cancel:'Cancelar', btn_add:'Agregar a mi lista',
+      manual_type_assignment:'Tarea', manual_type_event:'Evento',
+      label_title:'Título *', label_title_plain:'Título', label_due:'Fecha límite',
+      label_course:'Curso', label_details:'Detalles', label_points:'Puntos',
+      label_date:'Fecha', label_time:'Hora', label_location:'Lugar', label_submission:'Entrega',
+      section_assignments:'Tareas', hint_assignments:'Se envían recordatorios 2 días y 5 horas antes de cada plazo.',
+      section_events:'Eventos', hint_events:'Sin recordatorios — solo tu agenda.',
+      cal_toggle:'📅 Calendario', cal_7days:'7 días', cal_3days:'3 días',
+      cal_this_week:'Esta semana', cal_next_week:'Próxima semana', cal_last_week:'Semana pasada',
+      pinned_label:'📌 Fijado',
+      view_reqs:'Ver requisitos',
+      countdown_today:'hoy', countdown_tomorrow:'mañana',
+      days_label: n => `en ${n} días`,
+      mark_done:'Marcar listo', undo:'↩ Deshacer', edit:'Editar', delete_btn:'Eliminar',
+      mark_attended:'Marcar asistido', past_events:'Eventos pasados',
+      modal_edit_asgn:'Editar tarea', modal_edit_evt:'Editar evento', modal_save:'Guardar',
+      no_date_banner:'📅 No se encontró fecha límite — establécela abajo',
+      paste_first:'Pega algo primero.',
+      nothing_found:'No se encontró nada. Intenta pegar más contenido.',
+      could_not_save:'No se pudo guardar. Intenta de nuevo.',
+      title_required:'El título es obligatorio.',
+      saved_refreshing:'¡Guardado! Actualizando…',
+      saved_msg: n => `¡Guardado ${n} elemento(s)! Actualizando…`,
+      delete_asgn_confirm:'¿Eliminar esta tarea?',
+      delete_evt_confirm:'¿Eliminar este evento?',
+      nothing_found_preview:'No se encontró nada.',
+      no_events_found:'No se encontraron eventos.',
+      nothing_day:'Nada este día 🎉',
+      cal_nothing:'Nada',
+      day_short:['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
+      day_long:['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],
+      mon_short:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      mon_long:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+    },
+  };
+  let currentLang = 'en';
+  let T = TRANSLATIONS['en'];
+
   const pasteEl  = document.getElementById('paste');
   const loading  = document.getElementById('loading');
   const msgBox   = document.getElementById('msg');
@@ -634,7 +772,7 @@
       payload = { type: 'image', data: img.dataset.b64, mediaType: img.dataset.mime, mode: currentMode };
     } else {
       const text = pasteEl.innerText.trim();
-      if (!text) { showMsg('Paste something first.', 'error'); return; }
+      if (!text) { showMsg(T.paste_first, 'error'); return; }
       payload = { type: 'text', content: text, mode: currentMode };
     }
     setLoading(true);
@@ -644,7 +782,7 @@
       if (!res.ok) { showMsg(data.error || 'Something went wrong.', 'error'); return; }
       parsed = data;
       const items = currentMode === 'events' ? parsed.events : parsed.assignments;
-      if (!items?.length) { showMsg('Nothing found. Try pasting more content.', 'error'); return; }
+      if (!items?.length) { showMsg(T.nothing_found, 'error'); return; }
       if (currentMode === 'events') {
         renderEventPreviews(parsed.events || []);
         document.getElementById('preview-assignments').classList.add('hidden');
@@ -656,7 +794,7 @@
       }
       previewWrap.classList.remove('hidden');
       previewWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (err) { showMsg('Something went wrong. Try again.', 'error'); }
+    } catch (err) { showMsg(T.could_not_save, 'error'); }
     finally { setLoading(false); }
   };
 
@@ -671,10 +809,10 @@
         res = await post('/api/save', { assignments: collectAssignmentEdits() });
       }
       d = await res.json();
-      showMsg(`Saved ${d.saved?.length || 0} item(s)! Refreshing…`, 'success');
+      showMsg(T.saved_msg(d.saved?.length || 0), 'success');
       setTimeout(() => location.reload(), 1400);
     } catch {
-      showMsg('Could not save. Try again.', 'error');
+      showMsg(T.could_not_save, 'error');
       document.getElementById('btn-confirm').disabled = false;
     }
   };
@@ -696,41 +834,41 @@
   });
 
   function renderAssignmentPreviews(list) {
-    document.getElementById('preview-assignments').innerHTML = list.map((a, i) => {
+    document.getElementById('preview-assignments').innerHTML = list.length ? list.map((a, i) => {
       const noDate = !a.due_date;
       return `
         <div class="preview-card ${noDate ? 'needs-date' : ''}" id="pa-${i}">
-          ${noDate ? '<div class="no-date-banner">📅 No deadline found — please set one below</div>' : ''}
-          <span class="preview-label">Title</span>
+          ${noDate ? `<div class="no-date-banner">${T.no_date_banner}</div>` : ''}
+          <span class="preview-label">${T.label_title_plain}</span>
           <input class="pinput" data-i="${i}" data-f="title" value="${x(a.title||'')}">
-          <span class="preview-label">Due date</span>
+          <span class="preview-label">${T.label_due}</span>
           <input class="pinput ${noDate ? 'pinput-required' : ''}" type="datetime-local" data-i="${i}" data-f="due_date" value="${dtl(a.due_date)}">
-          <span class="preview-label">Course</span>
+          <span class="preview-label">${T.label_course}</span>
           <input class="pinput" data-i="${i}" data-f="course" value="${x(a.course||'')}">
-          <span class="preview-label">Details</span>
+          <span class="preview-label">${T.label_details}</span>
           <textarea class="pinput ptextarea" data-i="${i}" data-f="description">${x(a.description||'')}</textarea>
           <button class="btn-remove" onclick="removePreview('pa-${i}', ${i}, 'assignments')">✕ Remove</button>
         </div>`;
-    }).join('') || '<p style="color:#bbb;font-size:13px;padding:8px 0;">Nothing found.</p>';
+    }).join('') : `<p style="color:#bbb;font-size:13px;padding:8px 0;">${T.nothing_found_preview}</p>`;
   }
 
   function renderEventPreviews(list) {
     document.getElementById('preview-events').innerHTML = list.length
       ? list.map((e, i) => `
         <div class="preview-card" id="pe-${i}">
-          <span class="preview-label">Title</span>
+          <span class="preview-label">${T.label_title_plain}</span>
           <input class="pinput ev" data-i="${i}" data-f="title" value="${x(e.title||'')}">
-          <span class="preview-label">Date</span>
+          <span class="preview-label">${T.label_date}</span>
           <input class="pinput ev" data-i="${i}" data-f="event_date" value="${x(e.event_date||'')}">
-          <span class="preview-label">Time</span>
+          <span class="preview-label">${T.label_time}</span>
           <input class="pinput ev" data-i="${i}" data-f="event_time" value="${x(e.event_time||'')}">
-          <span class="preview-label">Location</span>
+          <span class="preview-label">${T.label_location}</span>
           <input class="pinput ev" data-i="${i}" data-f="location" value="${x(e.location||'')}">
-          <span class="preview-label">Details</span>
+          <span class="preview-label">${T.label_details}</span>
           <textarea class="pinput ptextarea ev" data-i="${i}" data-f="details">${x(e.details||'')}</textarea>
           <button class="btn-remove" onclick="removePreview('pe-${i}', ${i}, 'events')">✕ Remove</button>
         </div>`).join('')
-      : '<p style="color:#bbb;font-size:13px;padding:8px 0;">No events found.</p>';
+      : `<p style="color:#bbb;font-size:13px;padding:8px 0;">${T.no_events_found}</p>`;
   }
 
   function collectAssignmentEdits() {
@@ -764,9 +902,9 @@
     document.getElementById('paste-ui').classList.toggle('hidden', mode === 'manual');
     document.getElementById('manual-ui').classList.toggle('hidden', mode !== 'manual');
     document.getElementById('paste-hint').textContent = mode === 'events'
-      ? 'Paste a flyer, email, or announcement — AI grabs any event it finds.'
-      : mode === 'manual' ? 'Fill in the details below.'
-      : 'Paste Canvas content — AI extracts deadlines.';
+      ? T.paste_hint_event
+      : mode === 'manual' ? T.paste_hint_manual
+      : T.paste_hint_assignment;
     if (mode !== 'manual') { pasteEl.innerHTML = ''; previewWrap.classList.add('hidden'); hideMsg(); }
   }
 
@@ -787,18 +925,18 @@
     let body;
     if (manualType === 'assignment') {
       const title = document.getElementById('ma-title').value.trim();
-      if (!title) { mmsg.textContent = 'Title is required.'; mmsg.className = 'msg msg-error'; return; }
+      if (!title) { mmsg.textContent = T.title_required; mmsg.className = 'msg msg-error'; return; }
       body = { kind: 'assignment', title, due_date: document.getElementById('ma-due').value, course: document.getElementById('ma-course').value, description: document.getElementById('ma-desc').value, points: document.getElementById('ma-points').value };
     } else {
       const title = document.getElementById('me-title').value.trim();
-      if (!title) { mmsg.textContent = 'Title is required.'; mmsg.className = 'msg msg-error'; return; }
+      if (!title) { mmsg.textContent = T.title_required; mmsg.className = 'msg msg-error'; return; }
       const d = document.getElementById('me-date').value;
       const t = document.getElementById('me-time').value;
       body = { kind: 'event', title, event_date: d, event_time: t, location: document.getElementById('me-location').value, details: document.getElementById('me-details').value, sort_date: d && t ? `${d} ${t}` : '' };
     }
     const res = await post('/api/add-one', body);
-    if (res.ok) { mmsg.textContent = 'Saved! Refreshing…'; mmsg.className = 'msg msg-success'; setTimeout(() => location.reload(), 1200); }
-    else { mmsg.textContent = 'Could not save.'; mmsg.className = 'msg msg-error'; }
+    if (res.ok) { mmsg.textContent = T.saved_refreshing; mmsg.className = 'msg msg-success'; setTimeout(() => location.reload(), 1200); }
+    else { mmsg.textContent = T.could_not_save; mmsg.className = 'msg msg-error'; }
   };
 
   // ── Edit modal ────────────────────────────────────────────────────────────
@@ -810,7 +948,7 @@
     if (ab) {
       const d = ab.dataset;
       editId = d.id; editKind = 'assignment';
-      document.getElementById('modal-title').textContent = 'Edit Assignment';
+      document.getElementById('modal-title').textContent = T.modal_edit_asgn;
       document.getElementById('modal-assignment-fields').classList.remove('hidden');
       document.getElementById('modal-event-fields').classList.add('hidden');
       document.getElementById('edit-title').value = d.title || '';
@@ -826,7 +964,7 @@
     if (eb) {
       const d = eb.dataset;
       editId = d.id; editKind = 'event';
-      document.getElementById('modal-title').textContent = 'Edit Event';
+      document.getElementById('modal-title').textContent = T.modal_edit_evt;
       document.getElementById('modal-assignment-fields').classList.add('hidden');
       document.getElementById('modal-event-fields').classList.remove('hidden');
       document.getElementById('eedit-title').value = d.title || '';
@@ -870,8 +1008,8 @@
       body = { title: document.getElementById('eedit-title').value, event_date: correctWeekday(rawDate), event_time: document.getElementById('eedit-time').value, location: document.getElementById('eedit-location').value, details: document.getElementById('eedit-details').value };
     }
     const res = await post(url, body);
-    if (res.ok) { mmsg.textContent = 'Saved! Refreshing…'; mmsg.className = 'msg msg-success'; setTimeout(() => location.reload(), 1000); }
-    else { mmsg.textContent = 'Could not save.'; mmsg.className = 'msg msg-error'; }
+    if (res.ok) { mmsg.textContent = T.saved_refreshing; mmsg.className = 'msg msg-success'; setTimeout(() => location.reload(), 1000); }
+    else { mmsg.textContent = T.could_not_save; mmsg.className = 'msg msg-error'; }
   };
 
   // ── Remove preview card ───────────────────────────────────────────────────
@@ -891,18 +1029,18 @@
     const data = await res.json();
     const card = document.getElementById(`a${id}`);
     const btn  = card.querySelector('.btn-green');
-    if (data.is_done) { card.classList.add('done'); btn.textContent = '↩ Undo'; }
-    else              { card.classList.remove('done'); btn.textContent = 'Mark done'; }
+    if (data.is_done) { card.classList.add('done'); btn.textContent = T.undo; btn.dataset.i18n = 'undo'; }
+    else              { card.classList.remove('done'); btn.textContent = T.mark_done; btn.dataset.i18n = 'mark_done'; }
   }
 
   async function delAssignment(id) {
-    if (!confirm('Delete this assignment?')) return;
+    if (!confirm(T.delete_asgn_confirm)) return;
     await fetch(`/api/delete/${id}`, { method: 'DELETE' });
     document.getElementById(`a${id}`).remove();
   }
 
   async function delEvent(id) {
-    if (!confirm('Delete this event?')) return;
+    if (!confirm(T.delete_evt_confirm)) return;
     await fetch(`/api/delete-event/${id}`, { method: 'DELETE' });
     document.getElementById(`e${id}`).remove();
   }
@@ -938,7 +1076,7 @@
       let lbl = document.getElementById('pin-label-asgn');
       if (!lbl) {
         lbl = document.createElement('div');
-        lbl.className = 'pin-section-label'; lbl.id = 'pin-label-asgn'; lbl.textContent = '📌 Pinned';
+        lbl.className = 'pin-section-label'; lbl.id = 'pin-label-asgn'; lbl.dataset.i18n = 'pinned_label'; lbl.textContent = T.pinned_label;
         pinnedGrp.prepend(lbl);
       }
     } else {
@@ -961,7 +1099,7 @@
       let lbl = document.getElementById('pin-label-evt');
       if (!lbl) {
         lbl = document.createElement('div');
-        lbl.className = 'pin-section-label'; lbl.id = 'pin-label-evt'; lbl.textContent = '📌 Pinned';
+        lbl.className = 'pin-section-label'; lbl.id = 'pin-label-evt'; lbl.dataset.i18n = 'pinned_label'; lbl.textContent = T.pinned_label;
         pinnedGrp.prepend(lbl);
       }
     } else {
@@ -1021,7 +1159,11 @@
     }, {offset: Number.NEGATIVE_INFINITY}).element;
   }
 
-  document.addEventListener('DOMContentLoaded', initDrag);
+  document.addEventListener('DOMContentLoaded', () => {
+    initDrag();
+    const saved = localStorage.getItem('lang') || 'en';
+    switchLang(saved);
+  });
 
   // ── Mark event attended ───────────────────────────────────────────────────
   async function toggleDoneEvent(id) {
@@ -1059,12 +1201,11 @@
 
   function updateWeekLabel() {
     const days = getWeekDays();
-    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const first = days[0], last = days[days.length-1];
-    const label = weekOffset === 0 ? 'This week'
-      : weekOffset === 1 ? 'Next week'
-      : weekOffset === -1 ? 'Last week'
-      : `${MON[first.getMonth()]} ${first.getDate()} – ${MON[last.getMonth()]} ${last.getDate()}`;
+    const label = weekOffset === 0 ? T.cal_this_week
+      : weekOffset === 1 ? T.cal_next_week
+      : weekOffset === -1 ? T.cal_last_week
+      : `${T.mon_short[first.getMonth()]} ${first.getDate()} – ${T.mon_short[last.getMonth()]} ${last.getDate()}`;
     document.getElementById('cal-week-label').textContent = label;
   }
 
@@ -1090,7 +1231,6 @@
   function renderStrip() {
     const days = getWeekDays();
     const todayStr = toDateStr(new Date());
-    const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     document.getElementById('cal-strip').innerHTML = days.map(d => {
       const ds = toDateStr(d);
       const items = CAL_DATA.filter(x => x.date === ds);
@@ -1099,7 +1239,7 @@
         `<span class="cal-dot ${x.type==='assignment'?'dot-purple':'dot-teal'}"></span>`).join('');
       const more = items.length > 4 ? `<span class="cal-more">+${items.length-4}</span>` : '';
       return `<div class="cal-day${isToday?' cal-today':''}" onclick="showDayPopup('${ds}',this)" data-date="${ds}">
-        <div class="cal-day-name">${DAY_NAMES[d.getDay()]}</div>
+        <div class="cal-day-name">${T.day_short[d.getDay()]}</div>
         <div class="cal-day-num">${d.getDate()}</div>
         <div class="cal-dots">${dots}${more}</div>
       </div>`;
@@ -1109,21 +1249,21 @@
   function renderAgenda() {
     const days = getWeekDays();
     const todayStr = toDateStr(new Date());
-    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const MON_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     document.getElementById('cal-agenda').innerHTML = days.map((d, i) => {
       const ds = toDateStr(d);
       const items = CAL_DATA.filter(x => x.date === ds);
       const isToday = ds === todayStr;
-      const label = isToday ? 'Today' : i === 1 && calRange===3 ? 'Tomorrow'
-        : `${DAY_NAMES[d.getDay()]}, ${MON_NAMES[d.getMonth()]} ${d.getDate()}`;
+      const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+      const label = isToday ? cap(T.countdown_today)
+        : i === 1 && calRange===3 ? cap(T.countdown_tomorrow)
+        : `${T.day_long[d.getDay()]}, ${T.mon_short[d.getMonth()]} ${d.getDate()}`;
       const rows = items.length
         ? items.map(x => `<div class="agenda-item">
             <span class="agenda-dot ${x.type==='assignment'?'dot-purple':'dot-teal'}"></span>
             <span>${x.title}${x.course?' <span style="color:#aaa;font-size:11px;">· ${x.course}</span>':''}</span>
             ${x.time?`<span class="agenda-time">${x.time}</span>`:''}
           </div>`).join('')
-        : `<div class="agenda-empty">Nothing</div>`;
+        : `<div class="agenda-empty">${T.cal_nothing}</div>`;
       return `<div class="agenda-day">
         <div class="agenda-day-label${isToday?' agenda-today-label':''}">${label}</div>
         ${rows}
@@ -1135,8 +1275,6 @@
     const popup = document.getElementById('cal-popup');
     const items = CAL_DATA.filter(x => x.date === dateStr);
     const d = new Date(dateStr + 'T12:00:00');
-    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const MON_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const rows = items.length
       ? items.map(x => `<div class="popup-item">
           <span class="popup-dot ${x.type==='assignment'?'dot-purple':'dot-teal'}"></span>
@@ -1145,8 +1283,8 @@
             <div class="popup-meta">${x.time||''}${x.course?' · '+x.course:''}${x.location?' · 📍'+x.location:''}</div>
           </div>
         </div>`).join('')
-      : '<div style="color:#aaa;font-size:13px;">Nothing this day 🎉</div>';
-    popup.innerHTML = `<div class="cal-popup-title">${DAY_NAMES[d.getDay()]}, ${MON_NAMES[d.getMonth()]} ${d.getDate()}</div>${rows}`;
+      : `<div style="color:#aaa;font-size:13px;">${T.nothing_day}</div>`;
+    popup.innerHTML = `<div class="cal-popup-title">${T.day_long[d.getDay()]}, ${T.mon_long[d.getMonth()]} ${d.getDate()}</div>${rows}`;
     const rect = el.getBoundingClientRect();
     popup.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
     popup.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 260) + 'px';
@@ -1157,6 +1295,36 @@
     if (!e.target.closest('.cal-day') && !e.target.closest('#cal-popup'))
       document.getElementById('cal-popup')?.classList.add('hidden');
   });
+
+  // ── Language switching ────────────────────────────────────────────────────
+  function applyLang() {
+    // Static elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (key === 'countdown_days') {
+        el.textContent = T.days_label(+(el.dataset.n || 0));
+      } else if (T[key] !== undefined && typeof T[key] !== 'function') {
+        el.textContent = T[key];
+      }
+    });
+    // Update paste hint for current mode
+    document.getElementById('paste-hint').textContent =
+      currentMode === 'events' ? T.paste_hint_event
+      : currentMode === 'manual' ? T.paste_hint_manual
+      : T.paste_hint_assignment;
+    // Re-render calendar if visible
+    if (calVisible) renderCalendar();
+  }
+
+  function switchLang(lang) {
+    currentLang = lang;
+    T = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    localStorage.setItem('lang', lang);
+    // Update active button
+    document.querySelectorAll('.lang-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.lang === lang));
+    applyLang();
+  }
 </script>
 </body>
 </html>
